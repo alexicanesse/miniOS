@@ -2,7 +2,7 @@
 //  main.c
 //  miniOS
 //
-//  Created by Alexi Canesse on 14/04/2022.
+//  Created by on 14/04/2022.
 //
 
 #include <stdio.h>
