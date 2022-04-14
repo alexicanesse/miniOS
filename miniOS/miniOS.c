@@ -1,8 +1,8 @@
 //
-//  main.c
+//  miniOS.c
 //  miniOS
 //
-//  Created by on 14/04/2022.
+//  Created on 14/04/2022.
 //
 
 #include <stdio.h>
