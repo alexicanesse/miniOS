@@ -22,6 +22,11 @@ void *init(void* param);
 void *idle(void* param);
 void switch_process(int signum, siginfo_t *info, void *ptr);
 
+
+
+
+
+
 //scheduler
 struct queue_element{
     uThread *element;
@@ -36,6 +41,10 @@ struct uThread_queue{
 typedef struct uThread_queue uThread_queue;
 
 int scheduler_add_thread(uThread *thread); //return -1 if fails and sets errno. Otherwise, return 0
+
+uThread *RR_func(void); //Round-robin scheduling
+uThread *CFS_func(void); //Completely Fair Scheduler
+uThread *next_to_schedule(void); 
 
 
 #endif /* miniOS_private_h */

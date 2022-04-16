@@ -7,6 +7,11 @@
 //requiered by ucontext
 #define _XOPEN_SOURCE
 
+//tells gcc that we do not want to know about deprecation.
+//without it, some systems complains because contexts are deprecated
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <stdlib.h>
 #include <pthread.h>
 #include <ucontext.h>
@@ -24,6 +29,9 @@
 
 vCPU *vCPUs = NULL; //list of all running vCPUs
 uThread *uThreads = NULL; //list of all running uThreads
+
+#warning TODO initialize at right time
+ucontext_t *current_context = NULL; //in stack so it is thread-specific
 
 int create_vCPU(int nbr_vCPU){
     while(nbr_vCPU--){
@@ -100,13 +108,17 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
     thread->next = uThreads;
     uThreads = thread;
     
+    //we schedule it
+    if(scheduler_add_thread(thread) != 0)
+        return -1;
+    
     return 0;
 }
 
 int destruct_uThread(uThread* thread){
     if(thread == NULL)
         return -1; //this is a protection
-    
+#warning TODO remove the thread from the data structure of the scheduler
     //we delete the thread from the thread list
     uThread *thread_it = uThreads;
     uThread *thread_buff = NULL;
@@ -146,6 +158,8 @@ void *init(void* param){ //suspends until a signal is received
 
     sigaction(SIGUSR1, &_sigact, NULL);
 
+    
+#warning TODO schedule init
     idle(NULL); //we idle until we are told to schedule a thread
     return NULL;
 }
@@ -156,11 +170,16 @@ void *idle(void* param){
     sigemptyset(&sigmask);
     
     while(1) //the function wont terminate
-        sigsuspend(&sigmask); //the is no need to waste CPU cycles while we wait
+        sigsuspend(&sigmask); //there is no need to waste CPU cycles while we wait
     
     return NULL;
 }
 
 void switch_process(int signum, siginfo_t *info, void *ptr){
-#warning TODO
+    uThread *thread = next_to_schedule();
+    
+    ucontext_t *past_context = current_context;
+    current_context = thread->context;
+    
+    swapcontext(past_context, thread->context);
 }
