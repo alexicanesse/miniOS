@@ -10,6 +10,18 @@
 
 #include "vCPU.h"
 
+//here because the user should not have access to it
+struct vCPU{
+    pthread_t *pthread;
+    struct vCPU *next; //used to make lists
+};
+typedef struct vCPU vCPU;
+
+void *idle(void* param);
+//
+
+
+
 
 vCPU *vCPUs = NULL; //list of all running vCPUs
 
@@ -49,4 +61,13 @@ int destruct_vCPU(int nbr_vCPU){
         free(cpu_buffer);
     }
     return 0;
+}
+
+#warning il faut limite le sigsuspend à un signal user qui servira à ca (plus safe)
+void *idle(void* param){ //suspends until a signal is received
+    sigset_t sigmask;
+    sigemptyset(&sigmask);
+    
+    sigsuspend(&sigmask);
+    return NULL;
 }

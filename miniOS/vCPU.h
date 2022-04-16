@@ -12,12 +12,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-struct vCPU{
-    pthread_t *pthread;
-    struct vCPU *next; //used to make lists
-};
-typedef struct vCPU vCPU;
-
 struct uThread{
     int uPID; //thread id
 };
@@ -32,14 +26,8 @@ uThread* create_uThread(void);
 int destruct_uThread(uThread* thread);
 int yield(uThread* thread);
 
-#warning il faut limite le sigsuspend à un signal user qui servira à ca (plus safe)
-void *idle(void* param){ //suspends until a signal is received
-    sigset_t sigmask;
-    sigemptyset(&sigmask);
-    
-    sigsuspend(&sigmask);
-    return NULL;
-}
+
+//void *idle(void* param);c
 
 
 
