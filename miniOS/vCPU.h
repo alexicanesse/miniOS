@@ -30,7 +30,7 @@ int destruct_vCPU(int nbr_vCPU); //returns 0 unless it fails. errno is set if it
 
 //the stack_size used is the same as the one of the os.
 int create_uThread(void (*func)(void), int argc, const char * argv[]); //returns 0 unless it fails. errno is set if it fails
-int destruct_uThread(uThread* thread);
+int destruct_uThread(uThread* thread); //returns 0 unless it fails. errno is set if it fails
 int yield(uThread* thread);
 
 

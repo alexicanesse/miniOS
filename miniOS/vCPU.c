@@ -111,6 +111,33 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
     return 0;
 }
 
+int destruct_uThread(uThread* thread){
+    if(thread == NULL)
+        return -1; //this is a protection
+    
+    //we delete the thread from the thread list
+    uThread *thread_it = uThreads;
+    uThread *thread_buff = NULL;
+    while(thread_it != NULL){
+        if(thread_it->context == thread->context){
+            if(thread_buff == NULL)
+                uThreads = thread->next;
+            else{
+                thread_buff->next = thread->next;
+            }
+            
+            free(thread->stack);
+            free(thread->context);
+            free(thread);
+            return 0;
+        }
+        thread_buff = thread_it;
+        thread_it = thread_it->next;
+    }
+    //we haven't found the thread
+    return -1;
+}
+
 int yield(uThread* thread){
 #warning it still need to be implemented: it will send the same signal as the alarm to the scheduler
     return 0;
