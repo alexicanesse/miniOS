@@ -70,9 +70,6 @@ int destruct_vCPU(int nbr_vCPU){
     return 0;
 }
 
-//
-//
-//printf("%llu", lim.rlim_cur);
 int create_uThread(void (*func)(void), int argc, const char * argv[]){
     uThread *thread = (uThread *) malloc(sizeof(uThread*));
     if(thread == NULL) //if malloc failed
