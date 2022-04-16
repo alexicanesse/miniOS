@@ -16,16 +16,8 @@
 #include<stdio.h>
 
 #include "vCPU.h"
-
-//here because the user should not have access to it
-struct vCPU{
-    pthread_t *pthread;
-    struct vCPU *next; //used to make lists
-};
-typedef struct vCPU vCPU;
-
-void *idle(void* param);
-//
+#include "scheduler.h"
+#include "miniOS_private.h"
 
 
 
@@ -42,7 +34,7 @@ int create_vCPU(int nbr_vCPU){
             return -1; //malloc already sets errno correctly
         
         //create a thread (vCPU) and suspend it until a signal wakes it up
-        if(pthread_create(thread, NULL, idle, NULL)) //if return 0, it worked
+        if(pthread_create(thread, NULL, init, NULL)) //if return 0, it worked
             return -1; //pthread_create already sets errno correctly
             
         cpu->pthread = thread;
@@ -143,11 +135,32 @@ int yield(uThread* thread){
     return 0;
 }
 
-#warning il faut limite le sigsuspend à un signal user qui servira à ca (plus safe)
-void *idle(void* param){ //suspends until a signal is received
+
+void *init(void* param){ //suspends until a signal is received
+    //set up a signal handler for SIGUSR1 in order to let the scheduler tell us to switch to the next process
+    static struct sigaction _sigact;
+
+    memset(&_sigact, 0, sizeof(_sigact));
+    _sigact.sa_sigaction = switch_process;
+    _sigact.sa_flags = SA_SIGINFO;
+
+    sigaction(SIGUSR1, &_sigact, NULL);
+
+    idle(NULL); //we idle until we are told to schedule a thread
+    return NULL;
+}
+
+#warning il faut limite le sigsuspend à un signal user qui servira à ca (plus safe) le sigusr1
+void *idle(void* param){
     sigset_t sigmask;
     sigemptyset(&sigmask);
     
-    sigsuspend(&sigmask);
+    while(1) //the function wont terminate
+        sigsuspend(&sigmask); //the is no need to waste CPU cycles while we wait
+    
     return NULL;
+}
+
+void switch_process(int signum, siginfo_t *info, void *ptr){
+#warning TODO
 }
