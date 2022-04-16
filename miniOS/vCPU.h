@@ -7,13 +7,20 @@
 
 #ifndef vCPU_h
 #define vCPU_h
+//requiered by ucontext
+#define _XOPEN_SOURCE
 
 #include <pthread.h>
 #include <unistd.h>
 #include <signal.h>
 
+
+
 struct uThread{
-    int uPID; //thread id
+    ucontext_t *context;
+    char *stack;
+    unsigned long long stack_size;
+    struct uThread *next; //used to make lists
 };
 typedef struct uThread uThread;
 
@@ -21,13 +28,10 @@ typedef struct uThread uThread;
 int create_vCPU(int nbr_vCPU); //returns 0 unless it fails. errno is set if it fails
 int destruct_vCPU(int nbr_vCPU); //returns 0 unless it fails. errno is set if it fails
 
-#warning arguments à definir
-uThread* create_uThread(void);
+//the stack_size used is the same as the one of the os.
+int create_uThread(void (*func)(void), int argc, const char * argv[]); //returns 0 unless it fails. errno is set if it fails
 int destruct_uThread(uThread* thread);
 int yield(uThread* thread);
-
-
-//void *idle(void* param);c
 
 
 
