@@ -11,8 +11,10 @@
 #include "miniOS_private.h"
 
 
+uThread_queue* empty_queue(void){
+    return (uThread_queue *) malloc(sizeof(uThread_queue));
+}
 uThread_queue *queue;
-
 
 
 enum scheduler_policies policy = RR;
@@ -31,6 +33,8 @@ void config_scheduler(int quantum, enum scheduler_policies scheduler_policy){
     else{ //RR
         scheduler.func = RR_func;
         policy = RR;
+        if(queue == NULL)
+            queue = empty_queue();
         queue->first = NULL;
         queue->last = NULL;
     }
