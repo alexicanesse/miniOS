@@ -44,11 +44,14 @@ void config_scheduler(int quantum, enum scheduler_policies scheduler_policy){
 }
 
 uThread *RR_func(void){ //we update the queue and switch to the next uThread
-#warning need to schedule idle if empty queue
+    while(queue->first == NULL) //if there is nothing to schedule, schedule idle 
+        create_uThread(idle, 0, NULL);
+    
     uThread *thread = queue->first->element; //next thread
 
     pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
-    queue->last->next = queue->first;
+    if(queue->last != NULL)
+        queue->last->next = queue->first;
     queue->last = queue->first; //we put it at the end
     queue->first = queue->first->next; //we remove it from the begining
     queue->last->next = NULL;
@@ -88,7 +91,10 @@ int scheduler_add_thread(uThread *thread){//adds thread to the appropriate data 
             queue = empty_queue();
         if(queue->last != NULL)
             queue->last->next = element;
-        queue->last = element;
+        if(queue->first == NULL)
+            queue->first = element;
+        else
+            queue->last = element;
         pthread_mutex_unlock(&mutex);
         return 0;
     }

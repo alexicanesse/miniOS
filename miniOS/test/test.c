@@ -26,11 +26,9 @@ void f_t2(void){ //thread 2
 
 int main(){
     printf("%d\n", create_vCPU(5));
-    sleep(3);
-    printf("%d\n", destruct_vCPU(3));
     config_scheduler(1, RR);
     printf("%d\n", create_uThread(&f_t1, 0, NULL));
-    
+    run();
     sleep(1000);
     return 0;
 }

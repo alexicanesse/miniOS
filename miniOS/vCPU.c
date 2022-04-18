@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 
 #include "vCPU.h"
 #include "scheduler.h"
@@ -182,6 +183,7 @@ void *init(void* param){ //suspends until a signal is received
     _sigact.sa_flags = SA_SIGINFO;
 
     sigaction(SIGALRM, &_sigact, NULL);
+    printf("here1\n");
     return NULL;
 }
 

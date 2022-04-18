@@ -9,6 +9,7 @@
 #define scheduler_h
 
 #include <stdio.h>
+#include <ucontext.h>
 
 #include "vCPU.h"
 
