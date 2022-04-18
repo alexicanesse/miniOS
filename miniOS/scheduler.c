@@ -50,9 +50,11 @@ uThread *RR_func(void){ //we update the queue and switch to the next uThread
     return thread;
 }
 
-//uThread *CFS_func(void){
+uThread *CFS_func(void){
 #warning TODO
-//}
+    uThread *thread = (uThread *) malloc(sizeof(uThread));
+    return thread;
+}
 
 uThread *next_to_schedule(void){
     if(policy == RR)
@@ -67,7 +69,6 @@ int scheduler_add_thread(uThread *thread){//adds thread to the appropriate data 
         return 0;
     }
     else{//RR
-#warning NOT thread-safe yet. We must use locks
         queue_element *element = (queue_element *) malloc(sizeof(queue_element));
         if(element == NULL) //if malloc failed
             return -1; //errno is already set by malloc
@@ -76,7 +77,8 @@ int scheduler_add_thread(uThread *thread){//adds thread to the appropriate data 
         element->next = NULL;
         //add element to the queue at the end
         pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
-        queue->last->next = element;
+        if(queue->last != NULL)
+            queue->last->next = element;
         queue->last = element;
         pthread_mutex_unlock(&mutex);
         return 0;
