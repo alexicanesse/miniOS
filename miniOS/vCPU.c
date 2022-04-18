@@ -59,10 +59,12 @@ int destruct_vCPU(int nbr_vCPU){
     while(nbr_vCPU--){
         if(vCPUs == NULL) //There isn't any vCPU left to delete
             return -1; //we were not able to delete enough vCPUs
-        
+
         vCPU *cpu_buffer = vCPUs;
         vCPUs = vCPUs->next; //the first vCPU is removed from the list
         
+        //the thread is canceled
+        pthread_cancel(*cpu_buffer->pthread);
         //free the memory
         free(cpu_buffer->pthread);
         free(cpu_buffer);
