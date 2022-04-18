@@ -2,7 +2,7 @@
 
 OUT=libminiOS.so
 CFLAGS=-Wall -D_POSIX_C_SOURCE=199309L -fPIC
-#CC=gcc-11
+CC=gcc
 #LDFLAGS =
 CFILES=$(wildcard *.c)
 OFILES=$(CFILES:.c=.o)

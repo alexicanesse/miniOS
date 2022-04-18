@@ -1,6 +1,6 @@
 OUT=test
 CFLAGS=-Wall
-CC=gcc-11
+CC=gcc
 #LDFLAGS =
 CFILES=$(wildcard *.c)
 OFILES=$(CFILES:.c=.o)
