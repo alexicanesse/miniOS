@@ -12,7 +12,10 @@
 
 
 uThread_queue* empty_queue(void){
-    return (uThread_queue *) malloc(sizeof(uThread_queue));
+    uThread_queue *queue = (uThread_queue *) malloc(sizeof(uThread_queue));
+    queue->first = NULL;
+    queue->last = NULL;
+    return queue;
 }
 uThread_queue *queue;
 
@@ -81,6 +84,8 @@ int scheduler_add_thread(uThread *thread){//adds thread to the appropriate data 
         element->next = NULL;
         //add element to the queue at the end
         pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
+        if(queue == NULL)
+            queue = empty_queue();
         if(queue->last != NULL)
             queue->last->next = element;
         queue->last = element;

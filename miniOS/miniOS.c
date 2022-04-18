@@ -7,6 +7,8 @@
 
 #include <sys/time.h>
 #include <signal.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "miniOS.h"
 #include "miniOS_private.h"
@@ -14,6 +16,7 @@
 
 extern scheduler_type scheduler;
 extern vCPU *vCPUs;
+
 void run(void){
     //set timer
     struct itimerval it;
@@ -23,16 +26,18 @@ void run(void){
     if (setitimer(ITIMER_REAL, &it, NULL) )
         perror("Problème de setitiimer");
 
-    struct sigaction sa;
-    sa.sa_handler = &handle_alarm;
-    sigfillset(&sa.sa_mask);
-    sigaction(SIGALRM, &sa, NULL);
+    static struct sigaction _sigact;
+    memset(&_sigact, 0, sizeof(_sigact));
+    _sigact.sa_sigaction = handle_alarm;
+    _sigact.sa_flags = SA_SIGINFO;
+
+    sigaction(SIGALRM, &_sigact, NULL);
 }
 
-void handle_alarm(int signal) { // on dit à tous les vCPU de lancer un nouveau thread
+void handle_alarm(int signum, siginfo_t *info, void *ptr){ //tell all vCPU to switch uThread
     vCPU *cpu = vCPUs;
     while(cpu != NULL){
-        pthread_kill(cpu->pthread, SIGUSR1);
+        pthread_kill(*cpu->pthread, SIGUSR1);
         cpu = cpu->next;
     }
 }

@@ -19,7 +19,7 @@ struct vCPU{
 typedef struct vCPU vCPU;
 
 void *init(void* param);
-void *idle(void* param);
+void idle(void);
 void switch_process(int signum, siginfo_t *info, void *ptr);
 
 
@@ -48,6 +48,6 @@ uThread *next_to_schedule(void);
 
 
 //miniOS
-void handle_alarm(int signal);
+void handle_alarm(int signum, siginfo_t *info, void *ptr);
 
 #endif /* miniOS_private_h */
