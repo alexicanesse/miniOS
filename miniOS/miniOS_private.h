@@ -47,4 +47,7 @@ uThread *CFS_func(void); //Completely Fair Scheduler
 uThread *next_to_schedule(void); 
 
 
+//miniOS
+void handle_alarm(int signal);
+
 #endif /* miniOS_private_h */

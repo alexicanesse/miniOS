@@ -14,5 +14,6 @@
 #include "scheduler.h"
 #include "memory.h"
 
+void run(void);
 
 #endif /* miniOS_h */
