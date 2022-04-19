@@ -111,7 +111,19 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
     
     //set up the context
     errno = 0; //we must check errno because makecontext does not return a value
+    
+#warning TEST
+//    struct sigaction act;
+//    sigaction(SIGALRM, NULL, &act);
+//    act.sa_sigaction = switch_process;/* set new SIGALRM handler to ignore */
+//    sigaction(SIGALRM, &act, NULL);
+#warning end of test
     getcontext(context);
+#warning TEST
+//    sigaction(SIGALRM, NULL, &act);
+//    act.sa_handler = SIG_IGN;/* set new SIGALRM handler to ignore */
+//    sigaction(SIGALRM, &act, NULL);
+#warning END OF TEST
     context->uc_stack.ss_sp = stack;
     context->uc_stack.ss_size = thread->stack_size;
 #warning I have some doubts about the arguments
@@ -169,13 +181,6 @@ int yield(uThread* thread){
 
 
 void *init(void* param){ //suspends until a signal is received
-    //set up a signal handler for SIGUSR1 in order to let the scheduler tell us to switch to the next process
-    struct itimerval it;
-    it.it_interval.tv_sec = scheduler.quantum;
-    it.it_interval.tv_usec = 0;
-    it.it_value = it.it_interval;
-    if (setitimer(ITIMER_REAL, &it, NULL) )
-        perror("Problème de setitiimer");
 
     static struct sigaction _sigact;
     memset(&_sigact, 0, sizeof(_sigact));

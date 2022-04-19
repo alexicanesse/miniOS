@@ -5,6 +5,8 @@
 //  Created on 15/04/2022.
 //
 
+#define _XOPEN_SOURCE
+
 #ifndef scheduler_h
 #define scheduler_h
 

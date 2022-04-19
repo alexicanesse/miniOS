@@ -43,6 +43,13 @@ void config_scheduler(int quantum, enum scheduler_policies scheduler_policy){
     }
 }
 
+void f_t(void){ //thread 1
+    while(1){
+        printf("t1\n");
+        sleep(1);
+    }
+}
+
 uThread *RR_func(void){ //we update the queue and switch to the next uThread
     while(queue->first == NULL) //if there is nothing to schedule, schedule idle 
         create_uThread(idle, 0, NULL);
@@ -53,7 +60,8 @@ uThread *RR_func(void){ //we update the queue and switch to the next uThread
     if(queue->last != NULL)
         queue->last->next = queue->first;
     queue->last = queue->first; //we put it at the end
-    queue->first = queue->first->next; //we remove it from the begining
+    if(queue->first != NULL)
+        queue->first = queue->first->next; //we remove it from the begining
     queue->last->next = NULL;
     pthread_mutex_unlock(&mutex);
     
