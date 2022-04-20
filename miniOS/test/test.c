@@ -9,11 +9,12 @@
 
 #include "test.h"
 #include "../miniOS.h"
+#include "../miniOS_private.h"
 
 void f_t1(void){ //thread 1
     while(1){
         printf("t1\n");
-//        sleep(3);
+        sleep(1);
     }
 }
 
@@ -29,14 +30,11 @@ void f_t2(void){ //thread 2
 extern vCPU *vCPUs;
 
 int main(){
-    printf("%d\n", create_vCPU(3));
-    config_scheduler(1, RR);
+    printf("%d\n", create_vCPU(5));
+    config_scheduler(2, RR);
     printf("%d\n", create_uThread(&f_t2, 0, NULL));
+    printf("%d\n", create_uThread(&f_t1, 0, NULL));
+    printf("%d\n", create_uThread(&f_t1, 0, NULL));
     run();
-    while(1){
-        pthread_kill(*(vCPUs->pthread), SIGALRM);
-        sleep(5);
-    }
-    sleep(1000);
     return 0;
 }

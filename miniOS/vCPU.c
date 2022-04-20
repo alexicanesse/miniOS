@@ -33,8 +33,8 @@ vCPU *vCPUs = NULL; //list of all running vCPUs
 uThread *uThreads = NULL; //list of all running uThreads
 extern scheduler_type scheduler;
 
-#warning TODO initialize at right time
 ucontext_t *current_context = NULL; //in stack so it is thread-specific
+uThread *current_uThread = NULL; //in stack so it is thread-specific
 
 int create_vCPU(int nbr_vCPU){
     while(nbr_vCPU--){
@@ -111,22 +111,9 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
     
     //set up the context
     errno = 0; //we must check errno because makecontext does not return a value
-    
-#warning TEST
-//    struct sigaction act;
-//    sigaction(SIGALRM, NULL, &act);
-//    act.sa_sigaction = switch_process;/* set new SIGALRM handler to ignore */
-//    sigaction(SIGALRM, &act, NULL);
-#warning end of test
     getcontext(context);
-#warning TEST
-//    sigaction(SIGALRM, NULL, &act);
-//    act.sa_handler = SIG_IGN;/* set new SIGALRM handler to ignore */
-//    sigaction(SIGALRM, &act, NULL);
-#warning END OF TEST
     context->uc_stack.ss_sp = stack;
     context->uc_stack.ss_size = thread->stack_size;
-#warning I have some doubts about the arguments
     makecontext(context, func, argc, argv);
     if(errno != 0){ //makecontext failed
         free(thread);
@@ -136,14 +123,16 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
         return -1;
     }
     
-    //add the thread to the list of threads
-    thread->next = uThreads;
-    uThreads = thread;
+    thread->running = 0;
+    
+//    //add the thread to the list of threads
+//    thread->next = uThreads;
+//    uThreads = thread;
     
     //we schedule it
     if(scheduler_add_thread(thread) != 0)
         return -1;
-    
+
     return 0;
 }
 
@@ -181,18 +170,17 @@ int yield(uThread* thread){
 
 
 void *init(void* param){ //suspends until a signal is received
-
     static struct sigaction _sigact;
     memset(&_sigact, 0, sizeof(_sigact));
     _sigact.sa_sigaction = switch_process;
     _sigact.sa_flags = SA_SIGINFO;
 
-    sigaction(SIGALRM, &_sigact, NULL);
-    printf("here1\n");
+    sigaction(SIGUSR1, &_sigact, NULL);
+
+    idle();
     return NULL;
 }
 
-#warning il faut limite le sigsuspend à un signal user qui servira à ca (plus safe) le sigusr1
 void idle(void){
     sigset_t sigmask;
     sigemptyset(&sigmask);
@@ -202,11 +190,18 @@ void idle(void){
 }
 
 void switch_process(int signum, siginfo_t *info, void *ptr){
-    printf("here\n");
     uThread *thread = next_to_schedule();
+    thread->running = 1;
+    
+    //the thread is no longer running
+    if(current_uThread != NULL)
+        current_uThread->running = 0;
+    current_uThread = thread;
     
     ucontext_t *past_context = current_context;
     current_context = thread->context;
-    
-    swapcontext(past_context, thread->context);
+    if(past_context == NULL)
+        setcontext(thread->context);
+    else
+        swapcontext(past_context, thread->context);
 }

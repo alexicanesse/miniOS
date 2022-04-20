@@ -9,10 +9,10 @@ all: $(OUT)
 
 $(OUT): $(OFILES)
 	cp ../libminiOS.so libminiOS.so
-	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -fsanitize=address -fno-omit-frame-pointer -O2 -g
+	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -O2
 
 %.o: %.c
-	$(CC) $(CFLAGS) -o $@ -c $< -fsanitize=address 
+	$(CC) $(CFLAGS) -o $@ -c $< 
 
 clean :
 	$(RM) $(OFILES)

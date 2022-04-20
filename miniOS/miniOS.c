@@ -20,7 +20,6 @@ extern vCPU *vCPUs;
 void handle_alarm(int signum, siginfo_t *info, void *ptr);
 
 void run(void){
-#warning timer must be set here
     //set timer
     struct itimerval it;
     it.it_interval.tv_sec = scheduler.quantum;
@@ -35,13 +34,14 @@ void run(void){
     _sigact.sa_flags = SA_SIGINFO;
 
     sigaction(SIGALRM, &_sigact, NULL);
-    sleep(10000);
+    idle();
 }
 
 void handle_alarm(int signum, siginfo_t *info, void *ptr){
+    printf("\n");
     vCPU *cpu = vCPUs;
     while(cpu != NULL){
-        pthread_kill(*cpu->pthread, SIGALRM);
+        pthread_kill(*cpu->pthread, SIGUSR1);
         cpu = cpu->next;
     }
 }
