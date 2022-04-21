@@ -35,11 +35,12 @@ void config_scheduler(int quantum, enum scheduler_policies scheduler_policy){
 
 uThread *RR_func(void){ //we update the queue and switch to the next uThread
     while(queue->first == NULL || queue->first->element->running == 1){ //if there is nothing to schedule, schedule idle
-        pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
-        create_uThread(idle, 0, NULL);
-        uThread *thread = pop_last();
-        pthread_mutex_unlock(&mutex);
-        return thread;
+//        pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
+//        create_uThread(idle, 0, NULL); //we schedule idle() (it does a sigsuspend)
+//        uThread *thread = pop_last();
+//        pthread_mutex_unlock(&mutex);
+//        return thread;
+        return NULL;
     }
     uThread *thread = dequeue();
     enqueue(thread);

@@ -52,21 +52,6 @@ uThread *dequeue(void){
     return thread;
 }
 
-uThread *pop_last(void){ //not locked! be carefull
-    uThread *thread = queue->last->element;
-    if(queue->first == queue->last){//there is only one node
-        queue->first = NULL;
-        queue->last = NULL;
-    }
-    else{
-        uThread_queue *q_buff= queue;
-        while(q_buff->first->next != queue->last)
-            q_buff->first = q_buff->first->next;
-        queue->last = q_buff->first;
-    }
-    return thread;
-}
-
 
 uThread_queue* empty_queue(void){
     uThread_queue *queue = (uThread_queue *) malloc(sizeof(uThread_queue));

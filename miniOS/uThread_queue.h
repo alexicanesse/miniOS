@@ -26,6 +26,5 @@ typedef struct uThread_queue uThread_queue;
 
 int enqueue(uThread *thread);
 uThread *dequeue(void);
-uThread *pop_last(void);
 uThread_queue* empty_queue(void);
 #endif /* uThread_queue_h */

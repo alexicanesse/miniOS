@@ -191,17 +191,23 @@ void idle(void){
 
 void switch_process(int signum, siginfo_t *info, void *ptr){
     uThread *thread = next_to_schedule();
-    thread->running = 1;
     
     //the thread is no longer running
     if(current_uThread != NULL)
         current_uThread->running = 0;
     current_uThread = thread;
     
-    ucontext_t *past_context = current_context;
-    current_context = thread->context;
-    if(past_context == NULL)
-        setcontext(thread->context);
-    else
-        swapcontext(past_context, thread->context);
+    
+    if(thread == NULL)
+        idle();
+    else{
+        thread->running = 1;
+        
+        ucontext_t *past_context = current_context;
+        current_context = thread->context;
+        if(past_context == NULL)
+            setcontext(thread->context);
+        else
+            swapcontext(past_context, thread->context);
+    }
 }
