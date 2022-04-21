@@ -9,19 +9,11 @@
 #include "scheduler.h"
 #include "vCPU.h"
 #include "miniOS_private.h"
+#include "uThread_queue.h"
 
-
-uThread_queue* empty_queue(void){
-    uThread_queue *queue = (uThread_queue *) malloc(sizeof(uThread_queue));
-    queue->first = NULL;
-    queue->last = NULL;
-    return queue;
-}
 uThread_queue *queue;
 
-
 enum scheduler_policies policy = RR;
-
 scheduler_type scheduler;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; //lock use to make some ressources thread-safe
@@ -79,57 +71,3 @@ int scheduler_add_thread(uThread *thread){//adds thread to the appropriate data 
 }
 
 
-
-int enqueue(uThread *thread){
-    queue_element *element = (queue_element *) malloc(sizeof(queue_element));
-    if(element == NULL) //if malloc failed
-        return -1; //errno is already set by malloc
-    //init element
-    element->element = thread;
-    element->next = NULL;
-    //add element to the queue at the end
-    pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
-    if(queue == NULL)
-        queue = empty_queue();
-    if(queue->first == NULL)
-        queue->first = element;
-    else
-        queue->last->next = element;
-    queue->last = element;
-    pthread_mutex_unlock(&mutex);
-    
-    return 0;
-}
-
-uThread *dequeue(void){
-    uThread *thread = queue->first->element; //next thread
-
-    pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
-    if(queue->first == queue->last){//there is only one node
-        queue->first = NULL;
-        queue->last = NULL;
-    }
-    else
-        queue->first = queue->first->next;
-    //we realease the memory
-//    free(buffer);
-    pthread_mutex_unlock(&mutex);
-
-    
-    return thread;
-}
-
-uThread *pop_last(void){ //not locked! be carefull
-    uThread *thread = queue->last->element;
-    if(queue->first == queue->last){//there is only one node
-        queue->first = NULL;
-        queue->last = NULL;
-    }
-    else{
-        uThread_queue *q_buff= queue;
-        while(q_buff->first->next != queue->last)
-            q_buff->first = q_buff->first->next;
-        queue->last = q_buff->first;
-    }
-    return thread;
-}
