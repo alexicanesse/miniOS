@@ -17,8 +17,7 @@
 extern scheduler_type scheduler;
 extern vCPU *vCPUs;
 
-void handle_alarm(int signum, siginfo_t *info, void *ptr);
-
+//this function create a timer well set up for the current quantum. Each time the alarm rings, we send a SIGUSR1 to each thread. It tells them to switch to the next uThread.
 void run(void){
     //set timer
     struct itimerval it;
@@ -28,20 +27,20 @@ void run(void){
     if (setitimer(ITIMER_REAL, &it, NULL) )
         perror("Problème de setitiimer");
 
+    //set handler
     static struct sigaction _sigact;
     memset(&_sigact, 0, sizeof(_sigact));
     _sigact.sa_sigaction = handle_alarm;
     _sigact.sa_flags = SA_SIGINFO;
 
     sigaction(SIGALRM, &_sigact, NULL);
-    idle();
+    idle(); //wait()
 }
 
 void handle_alarm(int signum, siginfo_t *info, void *ptr){
-    printf("\n");
     vCPU *cpu = vCPUs;
     while(cpu != NULL){
-        pthread_kill(*cpu->pthread, SIGUSR1);
+        pthread_kill(*cpu->pthread, SIGUSR1); //It tells them to switch to the next uThread.
         cpu = cpu->next;
     }
 }
