@@ -38,7 +38,7 @@ uThread *RR_func(void){ //we update the queue and switch to the next uThread
         return NULL; //the thread will idle
     
     uThread *thread = dequeue(); //get the thread at the end of the queue and remove it from the queue
-    enqueue(thread); //it needs to be scheduled back otherwise it would not be able to ever finish
+//    enqueue(thread); //it needs to be scheduled back otherwise it would not be able to ever finish
     
     return thread;
 }
@@ -49,9 +49,14 @@ uThread *CFS_func(void){
     return thread;
 }
 
-uThread *next_to_schedule(void){ //asks the function associated with the current policy what to schedule next
-    if(policy == RR)
+uThread *next_to_schedule(uThread *thread){ //asks the function associated with the current policy what to schedule next
+    if(policy == RR){
+        if(thread != NULL){
+            thread->running = 0;
+            enqueue(thread);
+        }
         return RR_func();
+    }
     //else -> CFS
     return CFS_func();
 }

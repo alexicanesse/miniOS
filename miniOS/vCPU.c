@@ -33,8 +33,8 @@ vCPU *vCPUs = NULL; //list of all running vCPUs
 uThread *uThreads = NULL; //list of all running uThreads
 extern scheduler_type scheduler;
 
-static __thread ucontext_t *current_context = NULL; 
-static __thread uThread *current_uThread = NULL;
+__thread ucontext_t *current_context = NULL; 
+__thread uThread *current_uThread = NULL;
 
 int create_vCPU(int nbr_vCPU){
     while(nbr_vCPU--){
@@ -194,7 +194,7 @@ void switch_process(int signum, siginfo_t *info, void *ptr){
     if(current_uThread != NULL)
         current_uThread->running = 0;
     
-    uThread *thread = next_to_schedule();
+    uThread *thread = next_to_schedule(current_uThread);
     current_uThread = thread;
     
     

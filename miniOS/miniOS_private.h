@@ -32,7 +32,7 @@ int scheduler_add_thread(uThread *thread); //return -1 if fails and sets errno. 
 
 uThread *RR_func(void); //Round-robin scheduling
 uThread *CFS_func(void); //Completely Fair Scheduler
-uThread *next_to_schedule(void);
+uThread *next_to_schedule(uThread * thread);
 
 
 //miniOS
