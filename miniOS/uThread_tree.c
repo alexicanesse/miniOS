@@ -16,7 +16,7 @@ uThread_tree *empty_tree(void){
     }
     
     tree->color = BLACK; //a leaf is black
-    tree->parent = NULL
+    tree->parent = NULL;
     tree->left = NULL;
     tree->right = NULL;
     tree->thread = NULL;
