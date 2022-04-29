@@ -19,6 +19,7 @@ struct uThread_tree{
     struct uThread_tree *parent;
     struct uThread_tree *left;
     struct uThread_tree *right;
+    struct uThread_tree *leftmost;
     long int v_time;
 };
 typedef struct uThread_tree uThread_tree;

@@ -86,29 +86,34 @@ int recolor(uThread_tree *tree) {
 }
 
 uThread_tree *rotate_right(uThread_tree *tree) {
-    uThread_tree *right = tree, *parent = tree->parent, *left = tree->left, *left_left = tree->left->left;
+    uThread_tree *right = tree, *parent = tree->parent, *left = tree->left, *left_right = tree->left->right;
     left->parent = parent;
     if (parent->left == right)
         parent->left = left;
     else
         parent->right = left;
-    left_left->parent = right;
-    right->left = left_left;
+    if (left_right != NULL) {
+        left_right->parent = right;
+        right->leftmost = left_right->leftmost;
+    } else
+        right->leftmost = right;
+    right->left = left_right;
     right->parent = left;
     left->right = right;
     return left;
 }
 
 uThread_tree *rotate_left(uThread_tree *tree) {
-    uThread_tree *left = tree, *parent = tree->parent, *right = tree->right, *right_right = tree->right->right;
+    uThread_tree *left = tree, *parent = tree->parent, *right = tree->right, *right_left = tree->right->left;
     right->parent = parent;
     if (parent->left == left)
         parent->left = right;
     else
         parent->right = right;
-    right_right->parent = left;
-    left->right = right_right;
+    right_left->parent = left;
+    left->right = right_left;
     left->parent = right;
     right->left = left;
+    right->leftmost = left->leftmost;
     return right;
 }
