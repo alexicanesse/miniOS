@@ -13,6 +13,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
+
 
 #include "test_hm.h"
 #include "../miniOS.h"
@@ -115,6 +117,7 @@ int main(){
     printf("p9 : %d, %p\n", *p9, p9);
     printf("p10 : %d, %p\n", *p10, p10);
     
+    sleep(100);
     return 0;
 }
 

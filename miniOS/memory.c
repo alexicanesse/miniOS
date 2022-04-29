@@ -17,6 +17,7 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/types.h> //requiered for mmap
 #include <sys/mman.h>
 #include <string.h>
 
@@ -118,11 +119,11 @@ void *hm_malloc(long int size){
                 return NULL;
         }
         else{
-            void * address = mmap(NULL /* the kernel is free to choose where to map it */,
+            address = mmap(0x0, /* the kernel is free to choose where to map it */
                  size + sizeof(mem_block),
-                 PROT_READ | PROT_WRITE | PROT_EXEC, /* we can do whatever we want with it */
-                 MAP_PRIVATE,
-                 -1,
+                 PROT_READ | PROT_WRITE, /* we can do whatever we want with it */
+                 MAP_SHARED | MAP_ANONYMOUS,
+                 0,
                  0);
             if(address == MAP_FAILED)
                 return NULL;
