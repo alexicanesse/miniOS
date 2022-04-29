@@ -40,7 +40,7 @@ void insert_block(mem_block *block){
     int inserted = 0;
     mem_block *mem_block_it = mem_list;
     mem_block *last = NULL;
-    while(mem_block_it != NULL && inserted != 0){
+    while(mem_block_it != NULL && inserted == 0){
         if(mem_block_it->ptr >= block->ptr){//the first one to reverse the order
             ++inserted;
             block->prev = mem_block_it->prev;
