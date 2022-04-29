@@ -29,22 +29,22 @@ uThread_tree *empty_tree(void) {
 uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree) {
     uThread_tree *node;
 
-    if (!tree) {
+    if (!tree) { // If tree is empty, create one
         node = empty_tree();
         node->thread = thread;
         node->color = RED;
         node->v_time = v_time;
     } else {
-        if (v_time < tree->v_time) {
+        if (v_time < tree->v_time) { // Find recursively where to insert
             node = insert(thread, v_time, tree->left);
-            if (!tree->left) {
+            if (!tree->left) { // If the node is to be inserted as a child
                 tree->left = node;
                 node->parent = tree;
                 tree->leftmost = node->leftmost;
                 if (tree->color == RED)
-                    recolor_on_insert(tree);
+                    recolor_on_insert(tree); // Re-equilibrate if both node and its parent are red
             }
-        } else {
+        } else { // Symmetric
             node = insert(thread, v_time, tree->right);
             if (!tree->right) {
                 tree->right = node;
@@ -59,13 +59,14 @@ uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree) {
 }
 
 uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
-    if (node->left != NULL && node->right != NULL) {
+    if (node->left != NULL && node->right != NULL) { // If node has 2 children, swap its value with one at the bottom
         node->v_time = node->right->leftmost->v_time;
         return remove_node(node->right->leftmost, tree);
     } else {
         struct uThread_tree *new_node;
         enum color color = node->color;
 
+        // Update potential child parent and select it as the node that will replace the one to be removed
         if (node->left != NULL) {
             node->left->parent = node->parent;
             new_node = node->left;
@@ -74,7 +75,7 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
             new_node = node->right;
         } else
             new_node = NULL;
-        if (node->parent != NULL) {
+        if (node->parent != NULL) { // If node has parents, update their children (+pointer to leftmost)
             if (node == node->parent->left)
                 node->parent->left = new_node;
             else
@@ -90,7 +91,7 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
         if (!tree)
             return tree;
 
-        if (color == BLACK) {
+        if (color == BLACK) { // If node was black, tree has to be re-equilibrated
             recolor_on_removal(new_node);
         }
 
@@ -99,10 +100,10 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
 }
 
 int recolor_on_insert(uThread_tree *tree) {
-    if (!tree->parent)
+    if (!tree->parent) // Root of tree can become black without further questions
         tree->color = BLACK;
     else {
-        if (tree->parent->left->color == RED && tree->parent->right->color == RED) {
+        if (tree->parent->left->color == RED && tree->parent->right->color == RED) { // If both childs are red, simple
             tree->parent->left->color = BLACK;
             tree->parent->right->color = BLACK;
             tree->parent->color = RED;
@@ -128,11 +129,10 @@ int recolor_on_insert(uThread_tree *tree) {
 }
 
 int recolor_on_removal(uThread_tree *tree) {
-    if (tree->color == RED ||
-        !tree->parent) // Soit le noeud à recolorier est à la racine ou est rouge : il devient noir
+    if (tree->color == RED || !tree->parent) // Father of the removed node become black if it was red / is the root
         tree->color = BLACK;
     else {
-        // Si son frère est rouge, les enfants de celui-là sont noirs, avec une rotation on se ramène à un frère noir
+        // If brother is red, its children are black, using a rotation it becomes black
         if (tree->parent->left->color == RED) {
             rotate_right(tree->parent);
             tree->parent->color = RED;
@@ -143,12 +143,14 @@ int recolor_on_removal(uThread_tree *tree) {
             tree->parent->color = RED;
             tree->parent->parent->color = BLACK;
         }
-        if (tree->parent->left == tree) { // Procédure symétrique suivant s'il s'agit du fils droit ou gauche
+        if (tree->parent->left == tree) {
+            // Both children of brother are black -> it becomes red and the problem goes up to the parent
             if ((tree->parent->right->left == NULL || tree->parent->right->left->color == BLACK) &&
                 (tree->parent->right->right == NULL || tree->parent->right->right->color == BLACK)) {
                 tree->parent->right->color = RED;
                 recolor_on_insert(tree->parent);
             } else {
+                // If left children of brother is red and right is black, with a rotation the left becomes red
                 if (tree->parent->right->left != NULL && tree->parent->right->left->color == RED &&
                     (tree->parent->right->right == NULL || tree->parent->right->right->color == BLACK)) {
                     rotate_right(tree->parent->right);
@@ -161,7 +163,7 @@ int recolor_on_removal(uThread_tree *tree) {
                 tree->parent->parent->right->color = BLACK;
                 tree->color = BLACK;
             }
-        } else {
+        } else { // Symmetric
             if ((tree->parent->left->right == NULL || tree->parent->left->right->color == BLACK) &&
                 (tree->parent->left->left == NULL || tree->parent->left->left->color == BLACK)) {
                 tree->parent->left->color = RED;
@@ -203,7 +205,7 @@ uThread_tree *rotate_right(uThread_tree *tree) {
     return left;
 }
 
-uThread_tree *rotate_left(uThread_tree *tree) {
+uThread_tree *rotate_left(uThread_tree *tree) { // Symmetric
     uThread_tree *left = tree, *parent = tree->parent, *right = tree->right, *right_left = tree->right->left;
     right->parent = parent;
     if (parent->left == left)
