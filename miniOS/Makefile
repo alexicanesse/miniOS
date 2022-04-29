@@ -4,7 +4,7 @@ OUT=libminiOS.so
 CFLAGS=-Wall -fPIC
 #CFLAGS=-Wall -D_POSIX_C_SOURCE=199309L -fPIC
 CC=gcc
-#LDFLAGS =
+LDFLAGS = -pthread
 CFILES=$(wildcard *.c)
 OFILES=$(CFILES:.c=.o)
 
