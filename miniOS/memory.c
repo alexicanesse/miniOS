@@ -85,8 +85,8 @@ void *hm_malloc(long int size){
             if(mem_block_it->size > size + sizeof(mem_block)){
 
                 //we create the new block and insert it
-                mem_block *block = (mem_block *) address + mem_block_it->size;
-                block->ptr = address + mem_block_it->size + sizeof(mem_block);
+                mem_block *block = (mem_block *) address + size;
+                block->ptr = address + size + sizeof(mem_block);
                 block->size = mem_block_it->size - size - sizeof(mem_block);
                 block->is_used = 0;
                 block->is_brk = mem_block_it->is_brk;
