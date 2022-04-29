@@ -73,7 +73,6 @@ void *hm_malloc(long int size){
      */
     pthread_mutex_lock(&mutex_mem_list);
     void* address = NULL;
-
     mem_block *mem_block_it = mem_list;
     while(mem_block_it != NULL && address == NULL){
         if(mem_block_it->is_used == 0 && mem_block_it->size >= size){ //the block is big enough.
@@ -241,10 +240,16 @@ void hm_free(void *ptr){
                  */
                 if(mem_block_it == last_brk){
                     sbrk( - sizeof(mem_block) - mem_block_it->size);
-                    if(mem_block_it->prev == NULL)//first block
+                    if(mem_block_it->prev == NULL){//first block
                         mem_list = mem_block_it->next;
-                    else
+                        if(mem_block_it->next != NULL)
+                            mem_block_it->next->prev = NULL;
+                    }
+                    else{
                         mem_block_it->prev->next = mem_block_it->next;
+                        if(mem_block_it->next != NULL)
+                            mem_block_it->next->prev = mem_block_it->prev;
+                    }
                 }
                 else{
                     mem_block_it->is_used = 0;
