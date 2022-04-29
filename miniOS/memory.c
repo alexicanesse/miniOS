@@ -113,7 +113,7 @@ void *hm_malloc(long int size){
             void * address = mmap(NULL /* the kernel is free to choose where to map it */,
                  size + sizeof(mem_block),
                  PROT_READ | PROT_WRITE | PROT_EXEC, /* we can do whatever we want with it */
-                 MAP_PRIVATE|MAP_ANONYMOUS,
+                 MAP_PRIVATE,
                  -1,
                  0);
             if(address == MAP_FAILED)
