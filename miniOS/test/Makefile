@@ -23,5 +23,5 @@ clean :
 	$(RM) $(OFILES)
 	
 mrproper : clean
-	$(RM) $(OUT)
+	$(RM) $(OUT) test_hm libminiOS.so
 
