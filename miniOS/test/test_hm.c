@@ -45,7 +45,8 @@ int main(){
     printf("Allocate 30 bytes to p3...\n");
     int *p3 = (int *) hm_malloc(30);
     printf("p3 : %d, %p\n", *p3, p3);
-    
+    printf("Free p3...\n");
+    hm_free(p3);
     
     printf("Allocate 12 bytes to p4...\n");
     int *p4 = (int *) hm_malloc(12);
@@ -105,7 +106,7 @@ int main(){
     printf("\nResult:\n\n");
     printf("p1 : freed\n");
     printf("p2 : freed\n");
-    printf("p3 : %d, %p\n", *p3, p3);
+    printf("p3 : freed\n");
     printf("p4 : %d, %p\n", *p4, p4);
     printf("p5 : freed\n");
     printf("p6 : %d, %p\n", *p6, p6);
