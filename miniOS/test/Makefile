@@ -15,7 +15,7 @@ $(OUT): $(OFILES)
 	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -O2
 
 %.o: %.c
-	$(CC) $(CFLAGS) -o $@ -c $< 
+	$(CC) -g $(CFLAGS) -o $@ -c $<
 
 clean :
 	$(RM) $(OFILES)

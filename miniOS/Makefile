@@ -17,7 +17,7 @@ vCPU.o : vCPU.c
 	$(CC) -Wall -D_POSIX_C_SOURCE=199309L -fPIC -o $@ -c $<
 
 %.o: %.c
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) -g $(CFLAGS) -o $@ -c $<
 
 clean :
 	$(RM) $(OFILES)
