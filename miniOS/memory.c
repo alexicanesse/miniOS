@@ -264,7 +264,8 @@ void hm_free(void *ptr){
                     mem_list = mem_block_it->next;
                 else{
                     mem_block_it->prev->next = mem_block_it->next;
-                    mem_block_it->next->prev = mem_block_it->prev;
+                    if(mem_block_it->next != NULL)
+                        mem_block_it->next->prev = mem_block_it->prev;
                 }
                 munmap(mem_block_it, sizeof(mem_block) + mem_block_it->size); //if it fails it sets erno
             }
