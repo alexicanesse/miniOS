@@ -243,10 +243,8 @@ void hm_free(void *ptr){
                     sbrk( - sizeof(mem_block) - mem_block_it->size);
                     if(mem_block_it->prev == NULL)//first block
                         mem_list = mem_block_it->next;
-                    else{
+                    else
                         mem_block_it->prev->next = mem_block_it->next;
-                        mem_block_it->next->prev = mem_block_it->prev;
-                    }
                 }
                 else{
                     mem_block_it->is_used = 0;
