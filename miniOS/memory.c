@@ -8,9 +8,15 @@
 //recommanded default value
 #define M_MMAP_THRESHOLD 128*1024
 
-#include <sys/mman.h>
-#include <pthread.h>
+
+//tells gcc that we do not want to know about deprecation.
+//without it, some systems complains because contexts are deprecated
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+
 #include <unistd.h>
+#include <pthread.h>
 #include <sys/mman.h>
 #include <string.h>
 
@@ -67,7 +73,7 @@ void *hm_malloc(long int size){
      */
     pthread_mutex_lock(&mutex_mem_list);
     void* address = NULL;
-    
+
     mem_block *mem_block_it = mem_list;
     while(mem_block_it != NULL && address == NULL){
         if(mem_block_it->is_used == 0 && mem_block_it->size >= size){ //the block is big enough.
@@ -75,7 +81,7 @@ void *hm_malloc(long int size){
 
             //if the size is big enough to slice it, we slice it
             if(mem_block_it->size > size + sizeof(mem_block)){
-                
+
                 //we create the new block and insert it
                 mem_block *block = (mem_block *) address + mem_block_it->size;
                 block->ptr = address + mem_block_it->size + sizeof(mem_block);
@@ -84,18 +90,18 @@ void *hm_malloc(long int size){
                 block->is_brk = mem_block_it->is_brk;
                 block->next = mem_block_it->next;
                 block->prev = mem_block_it;
-               
-                
+
+
                 mem_block_it->size = size;
                 mem_block_it->next = block;
-                
+
                 if(last_brk == mem_block_it)
                     last_brk = block;
             }
         }
         mem_block_it = mem_block_it->next;
     }
-    
+
     if(address == NULL){ //there is not any block big enough
         int is_brk = 0;
         if(size < M_MMAP_THRESHOLD){
@@ -119,7 +125,7 @@ void *hm_malloc(long int size){
             if(address == MAP_FAILED)
                 return NULL;
         }
-    
+
         //we create the new block and insert it
         mem_block *block = (mem_block *) address;
         address += sizeof(mem_block);
@@ -130,7 +136,7 @@ void *hm_malloc(long int size){
         block->next = NULL;
         block->prev = NULL;
         insert_block(block);
-        
+
         if(is_brk)
             last_brk = block;
     }
@@ -158,7 +164,7 @@ void *hm_realloc(void* ptr, long int size){
                         block->is_brk = 1;
                         block->next = mem_block_it->next;
                         block->prev = mem_block_it;
-                        
+
                         //we change the size of the previous block
                         mem_block_it->size = size;
                         mem_block_it->next = block;
@@ -181,19 +187,19 @@ void *hm_realloc(void* ptr, long int size){
                               && mem_block_it->next != NULL
                               && mem_block_it->next->is_used == 0)
                             fusion_with_next(mem_block_it);
-                        
+
                         //if the block is big enough to be sliced, we call malloc again and the first part will handle it
                         if(mem_block_it->size > size + sizeof(mem_block)){
                             pthread_mutex_unlock(&mutex_mem_list);
                             return hm_malloc(size);
                         }
-                        
+
                         //if the block is the last block
                         if(mem_block_it == last_brk){
                             if(sbrk(size - mem_block_it->size) != (void *) -1) //if it worked
                                 mem_block_it->size = size;
                         }
-                        
+
                         /*
                         * if it cannot be enlarged enough and is not the last block
                         * we must malloc a new block and free up this one after a memcpy
@@ -207,7 +213,7 @@ void *hm_realloc(void* ptr, long int size){
                     }
                 }
                 else{//allocated using mmap
-                    
+
                 }
             }
             pthread_mutex_unlock(&mutex_mem_list);
@@ -216,7 +222,7 @@ void *hm_realloc(void* ptr, long int size){
         mem_block_it = mem_block_it->next;
     }
     pthread_mutex_unlock(&mutex_mem_list);
-    
+
     //we have not find the block; we just allocate a new block of memory;
     return hm_malloc(size);
 }
@@ -278,23 +284,23 @@ void fusion_with_next(mem_block *block){
      * This function must only be called we a break block
      * as blocks are ordered and break blocks are contigous, this is valid
      */
-    
+
     if(block == NULL || block->next == NULL)
         return;
-    
-    
+
+
     if(block->is_brk == 0 || block->next->is_brk == 0) //check that the block and the following are break blocks
         return;
-    
-    
+
+
     //if the next block is the last block
     if(block->next == last_brk)
         last_brk = block;
-    
 
-    
+
+
     block->size = block->size + block->next->size + sizeof(mem_block);
     block->next = block->next->next;
-    
+
 
 }
