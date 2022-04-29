@@ -19,4 +19,4 @@ clean :
 	$(RM) $(OFILES)
 	
 mrproper : clean
-	 (RM) $ (OUT)
+	$(RM) $(OUT)
