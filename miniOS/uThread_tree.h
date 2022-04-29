@@ -36,5 +36,6 @@ uThread_tree *rotate_right(uThread_tree *tree);
 
 uThread_tree *rotate_left(uThread_tree *tree);
 
+uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree);
 
 #endif /* uThread_tree_h */
