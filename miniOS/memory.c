@@ -64,6 +64,9 @@ void insert_block(mem_block *block){
             block->prev = last;
         }
     }
+    
+    if(last_brk == NULL || last_brk->ptr < block->ptr)
+        last_brk = block;
 }
 
 
@@ -233,7 +236,7 @@ void hm_free(void *ptr){
     mem_block *mem_block_it = mem_list;
     while(mem_block_it != NULL){
         if(mem_block_it->ptr == ptr){//we found it!
-            if(mem_block_it->is_brk){ //alloced with sbrk
+            if(mem_block_it->is_brk){ //allocated with sbrk
                 /*
                  * We free it if it is the last chuck of memory
                  * of any adjacent block is free, we fusion them

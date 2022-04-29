@@ -5,13 +5,15 @@ CC=gcc
 CFILES=$(wildcard *.c)
 OFILES=$(CFILES:.c=.o)
 
-all: $(OUT) test_hm
+all: init $(OUT) test_hm
+
+init :
+	cp ../libminiOS.so libminiOS.so
 
 test_hm : test_hm.o
 	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -O2
 	
 $(OUT): $(OFILES)
-	cp ../libminiOS.so libminiOS.so
 	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -O2
 
 %.o: %.c
