@@ -28,7 +28,9 @@ uThread_tree *empty_tree(void);
 
 uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree);
 
-int recolor(uThread_tree *tree);
+int recolor_on_insert(uThread_tree *tree);
+
+int recolor_on_removal(uThread_tree *tree);
 
 uThread_tree *rotate_right(uThread_tree *tree);
 

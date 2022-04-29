@@ -8,20 +8,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-uThread_tree *empty_tree(void){
+uThread_tree *empty_tree(void) {
     uThread_tree *tree = (uThread_tree *) malloc(sizeof(uThread_tree));
-    if(tree == NULL){//malloc failed
+    if (tree == NULL) {//malloc failed
         perror("Failed to create an empty tree.\n");
         return NULL;
     }
-    
+
     tree->color = BLACK; //a leaf is black
     tree->parent = NULL;
     tree->left = NULL;
     tree->right = NULL;
+    tree->leftmost = tree;
     tree->thread = NULL;
     tree->v_time = 0;
-    
+
     return tree;
 }
 
@@ -39,8 +40,9 @@ uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree) {
             if (!tree->left) {
                 tree->left = node;
                 node->parent = tree;
+                tree->leftmost = node->leftmost;
                 if (tree->color == RED)
-                    recolor(tree);
+                    recolor_on_insert(tree);
             }
         } else {
             node = insert(thread, v_time, tree->right);
@@ -48,7 +50,7 @@ uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree) {
                 tree->right = node;
                 node->parent = tree;
                 if (tree->color == RED)
-                    recolor(tree);
+                    recolor_on_insert(tree);
             }
         }
     }
@@ -65,7 +67,7 @@ int recolor(uThread_tree *tree) {
             tree->parent->right->color = BLACK;
             tree->parent->color = RED;
             if (tree->parent->parent != NULL && tree->parent->parent->color == RED)
-                recolor(tree->parent->parent);
+                recolor_on_insert(tree->parent->parent);
         } else {
             if (tree->parent->left->color == RED && tree->left->color == BLACK)
                 tree = rotate_left(tree);
