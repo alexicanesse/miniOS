@@ -59,9 +59,18 @@ int main(){
     printf("The second batch of tests uses mmap allocation.\n");
 
     
-    printf("Allocate 140000 bytes to p5...\n");
-    int *p5 = (int *) hm_malloc(140000);
+    printf("Allocate 1400000000 bytes to p5...\n");
+    int *p5 = (int *) hm_malloc(1400000000);
+    printf("Reallocate 1400000000 bytes to p5...\n");
+    p5 = (int *) hm_realloc(p5, 1400000000);
+    printf("Reallocate 1400000000 bytes to p5...\n");
+    p5 = (int *) hm_realloc(p5, 1400000000);
     printf("p5 : %d, %p\n", *p5, p5);
+    
+    printf("Set p5 to 42...\n");
+    *p5 = 42;
+    printf("%d, %p\n", *p5, p5);
+
     
     printf("Set p5 to 42...\n");
     *p5 = 42;
@@ -116,7 +125,7 @@ int main(){
     printf("p8 : %d, %p\n", *p8, p8);
     printf("p9 : %d, %p\n", *p9, p9);
     printf("p10 : %d, %p\n", *p10, p10);
-    
+    printf("brk address: %p\n", sbrk(0));
     sleep(100);
     return 0;
 }
