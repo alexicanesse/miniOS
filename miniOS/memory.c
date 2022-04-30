@@ -17,6 +17,7 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/types.h> //requiered for mmap
 #include <sys/mman.h>
 #include <string.h>
 
@@ -64,6 +65,9 @@ void insert_block(mem_block *block){
             block->prev = last;
         }
     }
+    
+    if(block->is_brk == 1 && (last_brk == NULL || last_brk->ptr < block->ptr))
+        last_brk = block;
 }
 
 
@@ -82,8 +86,8 @@ void *hm_malloc(long int size){
             if(mem_block_it->size > size + sizeof(mem_block)){
 
                 //we create the new block and insert it
-                mem_block *block = (mem_block *) address + mem_block_it->size;
-                block->ptr = address + mem_block_it->size + sizeof(mem_block);
+                mem_block *block = (mem_block *) address + size;
+                block->ptr = address + size + sizeof(mem_block);
                 block->size = mem_block_it->size - size - sizeof(mem_block);
                 block->is_used = 0;
                 block->is_brk = mem_block_it->is_brk;
@@ -115,11 +119,11 @@ void *hm_malloc(long int size){
                 return NULL;
         }
         else{
-            void * address = mmap(NULL /* the kernel is free to choose where to map it */,
+            address = mmap(0x0, /* the kernel is free to choose where to map it */
                  size + sizeof(mem_block),
-                 PROT_READ | PROT_WRITE | PROT_EXEC, /* we can do whatever we want with it */
-                 MAP_PRIVATE,
-                 -1,
+                 PROT_READ | PROT_WRITE, /* we can do whatever we want with it */
+                 MAP_SHARED | MAP_ANONYMOUS,
+                 0,
                  0);
             if(address == MAP_FAILED)
                 return NULL;
@@ -187,10 +191,10 @@ void *hm_realloc(void* ptr, long int size){
                               && mem_block_it->next->is_used == 0)
                             fusion_with_next(mem_block_it);
 
-                        //if the block is big enough to be sliced, we call malloc again and the first part will handle it
+                        //if the block is big enough to be sliced, we call realloc again and the first part will handle it
                         if(mem_block_it->size > size + sizeof(mem_block)){
                             pthread_mutex_unlock(&mutex_mem_list);
-                            return hm_malloc(size);
+                            return hm_realloc(mem_block_it->ptr, size);
                         }
 
                         //if the block is the last block
@@ -207,12 +211,21 @@ void *hm_realloc(void* ptr, long int size){
                         void *ptr = hm_malloc(size);
                         memcpy(ptr, mem_block_it->ptr, mem_block_it->size); //the memory is moved to the new location
                         hm_free(mem_block_it->ptr); //the precedent location is freed
-                        pthread_mutex_lock(&mutex_mem_list); //it doesn't matter if another thread entered a restricted area during this time
                         return ptr;
                     }
                 }
                 else{//allocated using mmap
-
+                    /*
+                     * we malloc anough memory
+                     * we copy the current memory inside the new one
+                     * we free the old memory
+                     * we return the new one
+                     */
+                    pthread_mutex_unlock(&mutex_mem_list); //malloc and free need the lock to be lifted
+                    void *ptr = hm_malloc(size);
+                    memcpy(ptr, mem_block_it->ptr, mem_block_it->size); //the memory is moved to the new location
+                    hm_free(mem_block_it->ptr); //the precedent location is freed
+                    return ptr;
                 }
             }
             pthread_mutex_unlock(&mutex_mem_list);
@@ -250,6 +263,7 @@ void hm_free(void *ptr){
                         if(mem_block_it->next != NULL)
                             mem_block_it->next->prev = mem_block_it->prev;
                     }
+                    last_brk = mem_block_it->prev;
                 }
                 else{
                     mem_block_it->is_used = 0;
@@ -301,10 +315,9 @@ void fusion_with_next(mem_block *block){
     if(block->next == last_brk)
         last_brk = block;
 
-
+    
 
     block->size = block->size + block->next->size + sizeof(mem_block);
     block->next = block->next->next;
-
 
 }

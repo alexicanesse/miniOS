@@ -13,6 +13,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
+
 
 #include "test_hm.h"
 #include "../miniOS.h"
@@ -57,16 +59,25 @@ int main(){
     printf("The second batch of tests uses mmap allocation.\n");
 
     
-    printf("Allocate 40000 bytes to p5...\n");
-    int *p5 = (int *) hm_malloc(40000);
+    printf("Allocate 1400000000 bytes to p5...\n");
+    int *p5 = (int *) hm_malloc(1400000000);
+    printf("Reallocate 1400000000 bytes to p5...\n");
+    p5 = (int *) hm_realloc(p5, 1400000000);
+    printf("Reallocate 1400000000 bytes to p5...\n");
+    p5 = (int *) hm_realloc(p5, 1400000000);
     printf("p5 : %d, %p\n", *p5, p5);
     
     printf("Set p5 to 42...\n");
     *p5 = 42;
     printf("%d, %p\n", *p5, p5);
+
     
-    printf("Allocate 60000 bytes to p6...\n");
-    int *p6 = (int *) hm_malloc(60000);
+    printf("Set p5 to 42...\n");
+    *p5 = 42;
+    printf("%d, %p\n", *p5, p5);
+    
+    printf("Allocate 160000 bytes to p6...\n");
+    int *p6 = (int *) hm_malloc(160000);
     printf("p6 : %d, %p\n", *p6, p6);
     
     printf("Set p6 to 69...\n");
@@ -77,13 +88,13 @@ int main(){
     hm_free(p5);
     
     
-    printf("Allocate 100000 bytes to p3...\n");
-    int *p7 = (int *) hm_malloc(100000);
+    printf("Allocate 200000 bytes to p3...\n");
+    int *p7 = (int *) hm_malloc(200000);
     printf("p7 : %d, %p\n", *p7, p7);
     
     
-    printf("Allocate 40000 bytes to p8...\n");
-    int *p8 = (int *) hm_malloc(40000);
+    printf("Allocate 139000 bytes to p8...\n");
+    int *p8 = (int *) hm_malloc(1390000);
     printf("p8 : %d, %p\n", *p8, p8);
 
     
@@ -114,7 +125,8 @@ int main(){
     printf("p8 : %d, %p\n", *p8, p8);
     printf("p9 : %d, %p\n", *p9, p9);
     printf("p10 : %d, %p\n", *p10, p10);
-    
+    printf("brk address: %p\n", sbrk(0));
+    sleep(100);
     return 0;
 }
 
