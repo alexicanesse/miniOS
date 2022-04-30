@@ -191,10 +191,10 @@ void *hm_realloc(void* ptr, long int size){
                               && mem_block_it->next->is_used == 0)
                             fusion_with_next(mem_block_it);
 
-                        //if the block is big enough to be sliced, we call malloc again and the first part will handle it
+                        //if the block is big enough to be sliced, we call realloc again and the first part will handle it
                         if(mem_block_it->size > size + sizeof(mem_block)){
                             pthread_mutex_unlock(&mutex_mem_list);
-                            return hm_malloc(size);
+                            return hm_realloc(mem_block_it->ptr, size);
                         }
 
                         //if the block is the last block
@@ -211,12 +211,21 @@ void *hm_realloc(void* ptr, long int size){
                         void *ptr = hm_malloc(size);
                         memcpy(ptr, mem_block_it->ptr, mem_block_it->size); //the memory is moved to the new location
                         hm_free(mem_block_it->ptr); //the precedent location is freed
-                        pthread_mutex_lock(&mutex_mem_list); //it doesn't matter if another thread entered a restricted area during this time
                         return ptr;
                     }
                 }
                 else{//allocated using mmap
-
+                    /*
+                     * we malloc anough memory
+                     * we copy the current memory inside the new one
+                     * we free the old memory
+                     * we return the new one
+                     */
+                    pthread_mutex_unlock(&mutex_mem_list); //malloc and free need the lock to be lifted
+                    void *ptr = hm_malloc(size);
+                    memcpy(ptr, mem_block_it->ptr, mem_block_it->size); //the memory is moved to the new location
+                    hm_free(mem_block_it->ptr); //the precedent location is freed
+                    return ptr;
                 }
             }
             pthread_mutex_unlock(&mutex_mem_list);
