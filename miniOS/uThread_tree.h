@@ -19,6 +19,7 @@ struct uThread_tree{
     struct uThread_tree *parent;
     struct uThread_tree *left;
     struct uThread_tree *right;
+    struct uThread_tree *leftmost;
     long int v_time;
 };
 typedef struct uThread_tree uThread_tree;
@@ -27,11 +28,14 @@ uThread_tree *empty_tree(void);
 
 uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree);
 
-int recolor(uThread_tree *tree);
+int recolor_on_insert(uThread_tree *tree);
+
+int recolor_on_removal(uThread_tree *tree);
 
 uThread_tree *rotate_right(uThread_tree *tree);
 
 uThread_tree *rotate_left(uThread_tree *tree);
 
+uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree);
 
 #endif /* uThread_tree_h */
