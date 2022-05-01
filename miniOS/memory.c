@@ -184,25 +184,26 @@ void *hm_realloc(void* ptr, long int size){
             }
             else{//we need to enlarge the memory block
                 if(mem_block_it->is_brk){//allocated using the break pointer
-                    if(last_brk == mem_block_it){//we just move the break pointer
-                        //if the next block is free, we fusion our blocks until out block is big enough
-                        while(mem_block_it->size < size
-                              && mem_block_it->next != NULL
-                              && mem_block_it->next->is_used == 0)
-                            fusion_with_next(mem_block_it);
+                    //if the next block is free, we fusion our blocks until out block is big enough
+                    while(mem_block_it->size < size
+                          && mem_block_it->next != NULL
+                          && mem_block_it->next->is_used == 0)
+                        fusion_with_next(mem_block_it);
 
-                        //if the block is big enough to be sliced, we call realloc again and the first part will handle it
-                        if(mem_block_it->size > size + sizeof(mem_block)){
-                            pthread_mutex_unlock(&mutex_mem_list);
-                            return hm_realloc(mem_block_it->ptr, size);
-                        }
-
-                        //if the block is the last block
+                    //if the block is big enough to be sliced, we call realloc again and the first part will handle it
+                    if(mem_block_it->size > size + sizeof(mem_block)){
+                        pthread_mutex_unlock(&mutex_mem_list);
+                        return hm_realloc(mem_block_it->ptr, size);
+                    }
+                    
+                    if(last_brk == mem_block_it){//if the block is the last block
+                        //we just move the break pointer
                         if(mem_block_it == last_brk){
                             if(sbrk(size - mem_block_it->size) != (void *) -1) //if it worked
                                 mem_block_it->size = size;
                         }
-
+                    }
+                    else{
                         /*
                         * if it cannot be enlarged enough and is not the last block
                         * we must malloc a new block and free up this one after a memcpy
