@@ -243,7 +243,6 @@ void *hm_realloc(void* ptr, long int size){
 
 
 void hm_free(void *ptr){
-    printf("%p\n", last_brk->ptr);
     //we find the block
     pthread_mutex_lock(&mutex_mem_list);
     mem_block *mem_block_it = mem_list;
