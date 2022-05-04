@@ -262,8 +262,11 @@ void hm_free(void *ptr){
                  * of any adjacent block is free, we fusion them
                  */
                 if(mem_block_it == last_brk){
-                    while(mem_block_it != NULL && mem_block_it->prev->is_used == 0)
-                        fusion_with_next(mem_block_it->prev);
+                    while(mem_block_it != NULL && mem_block_it->prev->is_used == 0){
+                        mem_block_it = mem_block_it->prev;
+                        fusion_with_next(mem_block_it);
+                    }
+                    
                     sbrk( - sizeof(mem_block) - mem_block_it->size);
                     if(mem_block_it->prev == NULL){//first block
                         mem_list = mem_block_it->next;
