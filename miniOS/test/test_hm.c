@@ -104,7 +104,6 @@ int main(){
      */
     printf("\033[0;32mTesting freeing the last chuck allocated using brk\033[0m\n");
     hm_free(p2);
-    printf("\n\n%p; %p; %p\n\n", p1, p2, p3);
     if(sbrk(0) == p3 + 20)
         printf("\033[0;35mFreeing the last chuck allocated using brk works!\033[0m\n\n");
     else
@@ -138,9 +137,9 @@ int main(){
 
 
     if(buff_test_6 == 0)
-        printf("\033[0;31mBrk reallocation using brk when the pointer is in the middle. fails. :c\033[0m\n\n");
+        printf("\033[0;31mBrk reallocation using brk when the pointer is in the middle fails. :c\033[0m\n\n");
     else
-        printf("\033[0;35mBrk reallocation using brk when the pointer is in the middle. works!\033[0m\n\n");
+        printf("\033[0;35mBrk reallocation using brk when the pointer is in the middle works!\033[0m\n\n");
 
 
 
