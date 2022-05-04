@@ -42,7 +42,7 @@ void insert_block(mem_block *block){
     mem_block *mem_block_it = mem_list;
     mem_block *last = NULL;
     while(mem_block_it != NULL && inserted == 0){
-        if(((long int) &mem_block_it->ptr) >= ((long int) &block->ptr)){//the first one to reverse the order
+        if(((long int) mem_block_it->ptr) >= ((long int) block->ptr)){//the first one to reverse the order
             ++inserted;
             block->prev = mem_block_it->prev;
             block->next = mem_block_it;
