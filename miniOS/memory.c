@@ -179,8 +179,14 @@ void *hm_realloc(void* ptr, long int size){
                      * we release the memory that we do not need anymore
                      * we change the size of the previous block if munmap worked
                      */
-                    if(munmap(mem_block_it->ptr + size, mem_block_it->size - size) == 0) //if it fails it sets erno
-                        mem_block_it->size = size;
+                    //find the next page
+                    long int page_size = sysconf(_SC_PAGESIZE);
+                    void * nxt_page = (void *) ((((long int) (mem_block_it->ptr + size))/page_size + 1)*page_size);
+                    
+                    //if the next page is mapped
+                    if(mem_block_it->size - size > page_size
+                       && (munmap(nxt_page, mem_block_it->size - size) == 0)) //if it fails it sets erno
+                        mem_block_it->size = (long int) nxt_page - (long int) mem_block_it->ptr;
                 }
             }
             else{//we need to enlarge the memory block
