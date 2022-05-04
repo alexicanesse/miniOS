@@ -105,7 +105,7 @@ int main(){
     printf("\033[0;32mTesting freeing the last chuck allocated using brk\033[0m\n");
     hm_free(p2);
     printf("\n\n%p; %p; %p\n\n", p1, p2, p3);
-    if(sbrk(0) == p3 + 20)
+    if(sbrk(0) == p3 + 20 + sizeof(mem_block))
         printf("\033[0;35mFreeing the last chuck allocated using brk works!\033[0m\n\n");
     else
         printf("\033[0;31mFreeing the last chuck allocated using brk fails. :c\033[0m\n\n");
