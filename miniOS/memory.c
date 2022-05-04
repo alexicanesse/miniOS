@@ -155,11 +155,13 @@ void *hm_realloc(void* ptr, long int size){
     mem_block *mem_block_it = mem_list;
     while(mem_block_it != NULL){
         if(mem_block_it->ptr == ptr){//we found it!
-            if(mem_block_it->size > size + sizeof(mem_block)){ //we can juste split the memory block
+            if(mem_block_it->size > size){ //we can use this block
                 if(mem_block_it->is_brk){//allocated using the break pointer
-                    if(last_brk == mem_block_it) //if it is on to of the heap, we realease the memory
+                    if(last_brk == mem_block_it){ //if it is on top of the heap, we realease the memory
                         sbrk(size - mem_block_it->size);
-                    else{ //we split the memory left
+                        mem_block_it->size = size;
+                    }
+                    else if(mem_block_it->size > size + sizeof(mem_block)){ //we split the memory left
                         //we create the new block and insert it
                         mem_block *block = (mem_block *) mem_block_it->ptr + size;
                         block->ptr = mem_block_it->ptr + size + sizeof(mem_block);
@@ -197,8 +199,8 @@ void *hm_realloc(void* ptr, long int size){
                           && mem_block_it->next->is_used == 0)
                         fusion_with_next(mem_block_it);
 
-                    //if the block is big enough to be sliced, we call realloc again and the first part will handle it
-                    if(mem_block_it->size > size + sizeof(mem_block)){
+                    //if the block is big enough to be used, we call realloc again and the first part will handle it
+                    if(mem_block_it->size >= size){
                         pthread_mutex_unlock(&mutex_mem_list);
                         return hm_realloc(mem_block_it->ptr, size);
                     }
