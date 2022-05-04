@@ -101,6 +101,7 @@ void *hm_malloc(long int size){
                 if(last_brk == mem_block_it)
                     last_brk = block;
             }
+            mem_block_it->is_used = 1;
         }
         mem_block_it = mem_block_it->next;
     }
