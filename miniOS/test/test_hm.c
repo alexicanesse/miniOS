@@ -63,7 +63,7 @@ int main(){
     }
     else
         buff_realloc_brk_end = 0;
-
+    printf("%p\n%p\n", sbrk(0), p1 + 20);
 
     if(buff_realloc_brk_end == 0)
         printf("\033[0;31mReallocation using brk at end of heap fails. :c\033[0m\n\n");
@@ -164,6 +164,55 @@ int main(){
         printf("\033[0;31mAllocation using brk fails. :c\033[0m\n\n");
 
 
+    /*
+     * Test 2: reallocation using mmap
+     */
+    printf("\033[0;32mTesting mmap reallocation.\033[0m\n");
+    int buff_realloc_brk_end_mmap = 1;
+    
+    printf("Reallocating M_MMAP_THRESHOLD + 200 bytes to p1...\n");
+    p5 = (char*) hm_realloc(p5, 2*M_MMAP_THRESHOLD + 200);
+    if(p5 != NULL){ //can move
+        for(int i = 0; i < 2*M_MMAP_THRESHOLD + 200; i++)
+            *(p5 + i) = 'b';
+    }
+    else
+        buff_realloc_brk_end_mmap = 0;
+
+    printf("Reallocating M_MMAP_THRESHOLD + 80 bytes to p1...\n");
+    void * init_ptr_5 = p5;
+    p5 = (char*) hm_realloc(p5, M_MMAP_THRESHOLD + 80);
+    if(errno == 0 && p5 != NULL && p5 == init_ptr_5){//should not move
+        for(int i = 0; i < M_MMAP_THRESHOLD + 80; i++)
+            *(p5 + i) = 'c';
+    }
+    else
+        buff_realloc_brk_end_mmap = 0;
+    
+
+    if(buff_realloc_brk_end_mmap == 0)
+        printf("\033[0;31mReallocation using mmap fails. :c\033[0m\n\n");
+    else
+        printf("\033[0;35mReallocation using mmap works!\033[0m\n\n");
+
+
+    /*
+     * Test 4: freeing a pointer allocated with mmap
+     */
+    printf("\033[0;32mTesting freeing a pointer allocated with mmap\033[0m\n");
+    printf("Freeing p5...\n");
+    hm_free(p5);
+    if(errno == 0)
+        printf("\033[0;35mFreeing a pointer allocated with mmap works!\033[0m\n\n\n");
+    else
+        printf("\033[0;31mFreeing a pointer allocated with mmap fails. :c\033[0m\n\n");
+
+
+
+    
+    
+    
+    
     return 0;
 }
 
