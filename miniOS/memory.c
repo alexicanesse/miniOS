@@ -42,7 +42,7 @@ void insert_block(mem_block *block){
     mem_block *mem_block_it = mem_list;
     mem_block *last = NULL;
     while(mem_block_it != NULL && inserted == 0){
-        if(mem_block_it->ptr >= block->ptr){//the first one to reverse the order
+        if(((long int) &mem_block_it->ptr) >= ((long int) &block->ptr)){//the first one to reverse the order
             ++inserted;
             block->prev = mem_block_it->prev;
             block->next = mem_block_it;
@@ -253,6 +253,8 @@ void hm_free(void *ptr){
                  * of any adjacent block is free, we fusion them
                  */
                 if(mem_block_it == last_brk){
+                    while(mem_block_it != NULL && mem_block_it->prev->is_used == 0)
+                        fusion_with_next(mem_block_it->prev);
                     sbrk( - sizeof(mem_block) - mem_block_it->size);
                     if(mem_block_it->prev == NULL){//first block
                         mem_list = mem_block_it->next;

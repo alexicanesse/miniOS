@@ -10,6 +10,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+#define M_MMAP_THRESHOLD 128*1024
 
 #include <stdio.h>
 #include <unistd.h>
@@ -22,7 +23,7 @@
 
 
 int main(){
-    printf("The first batch of tests uses brk allocation.\n");
+    printf("\033[0;34mThe first batch of tests uses brk allocation.\033[0m\n");
     
     /*
      * Test 1: allocation using brk
@@ -33,7 +34,7 @@ int main(){
     if(p1 != NULL){
         for(int i = 0; i < 12; i++)
             *(p1 + i) = 'a';
-        printf("\033[0;35mAllocation using brk works!\033[0m\np1 : %d, %p\n\n", *p1, p1);
+        printf("\033[0;35mAllocation using brk works!\033[0m\n\n");
     }
     else
         printf("\033[0;31mAllocation using brk fails. :c\033[0m\n\n");
@@ -67,7 +68,7 @@ int main(){
     if(buff_realloc_brk_end == 0)
         printf("\033[0;31mReallocation using brk at end of heap fails. :c\033[0m\n\n");
     else
-        printf("\033[0;35mReallocation using brk works!\033[0m\np1 : %d, %p\n\n", *p1, p1);
+        printf("\033[0;35mReallocation using brk works!\033[0m\n\n");
     
     
     /*
@@ -79,7 +80,7 @@ int main(){
     if(p2 != NULL && sbrk(0) == p1 + 20 + sizeof(mem_block) + 30){
         for(int i = 0; i < 30; i++)
             *(p1 + i) = 'd';
-        printf("\033[0;35mA second allocation using brk works!\033[0m\np1 : %d, %p\n\n", *p1, p1);
+        printf("\033[0;35mA second allocation using brk works!\033[0m\n\n");
     }
     else
         printf("\033[0;31mA second allocation using brk fails. :c\033[0m\n\n");
@@ -92,14 +93,9 @@ int main(){
     hm_free(p1);
     printf("Allocating 8 bytes to p3...\n");
     char *p3 = (char*) hm_malloc(8);
-    printf("Allocating 12 bytes to p4...\n");
-    char *p4 = (char*) hm_malloc(12);
     if(   p3 != NULL
-       && p4 != NULL
-       && p3 == init_ptr
-       && p3 + 8 == p4
-       && p4 + 12 == p2)
-        printf("\033[0;35mFreeing a pointer which is not the last one and has been allocated with brk works!\033[0m\np1 : %d, %p\n\n", *p1, p1);
+       && p3 == init_ptr)
+        printf("\033[0;35mFreeing a pointer which is not the last one and has been allocated with brk works!\033[0m\n\n\n");
     else
         printf("\033[0;31mFreeing a pointer which is not the last one and has been allocated with brk fails. :c\033[0m\n\n");
     
@@ -108,8 +104,8 @@ int main(){
      */
     printf("\033[0;32mTesting freeing the last chuck allocated using brk\033[0m\n");
     hm_free(p2);
-    if(sbrk(0) == p4 + 12)
-        printf("\033[0;35mFreeing the last chuck allocated using brk works!\033[0m\np1 : %d, %p\n\n", *p1, p1);
+    if(sbrk(0) == p3 + 8)
+        printf("\033[0;35mFreeing the last chuck allocated using brk works!\033[0m\n\n");
     else
         printf("\033[0;31mFreeing the last chuck allocated using brk fails. :c\033[0m\n\n");
     
@@ -119,6 +115,8 @@ int main(){
     printf("\033[0;32mTesting brk reallocation using brk when the pointer is in the middle.\033[0m\n");
     int buff_test_6 = 1;
     void * init_ptr3 = p3;
+    printf("Allocating 10 bytes to p4...\n");
+    void * p4 = hm_malloc(10);
     printf("Reallocating 5 bytes to p3...\n");
     p3 = (char*) hm_realloc(p3, 5);
     if(p3 != NULL && p3 == init_ptr3){
@@ -130,7 +128,7 @@ int main(){
     
     printf("Reallocating 50 bytes to p3...\n");
     p3 = (char*) hm_realloc(p3, 50);
-    if(p3 != NULL && sbrk(0) == p3 + 50 && p3 == p4 + sizeof(mem_block) + 12){
+    if(p3 != NULL && sbrk(0) == p3 + 50 && p3 == p4 + sizeof(mem_block) + 10){
         for(int i = 0; i < 50; i++)
             *(p3 + i) = 'c';
     }
@@ -141,8 +139,30 @@ int main(){
     if(buff_test_6 == 0)
         printf("\033[0;31mBrk reallocation using brk when the pointer is in the middle. fails. :c\033[0m\n\n");
     else
-        printf("\033[0;35mBrk reallocation using brk when the pointer is in the middle. works!\033[0m\np1 : %d, %p\n\n", *p3, p3);
-#warning TODO tests for mmap
+        printf("\033[0;35mBrk reallocation using brk when the pointer is in the middle. works!\033[0m\n\n");
+    
+    
+    
+    
+    /*
+     * MMAP ALLOCATION
+     */
+    printf("\033[0;34mThe second batch of tests uses mmap allocation.\033[0m\n");
+    
+    /*
+     * Test 1: allocation using mmap
+     */
+    printf("\033[0;32mTesting mmap allocation\033[0m\n");
+    printf("Allocating M_MMAP_THRESHOLD + 100 bytes to p5...\n");
+    char *p5 = (char*) hm_malloc(M_MMAP_THRESHOLD + 100);
+    if(p5 != NULL){
+        for(int i = 0; i < M_MMAP_THRESHOLD + 100; i++)
+            *(p5 + i) = 'a';
+        printf("\033[0;35mAllocation using brk works!\033[0m\n\n");
+    }
+    else
+        printf("\033[0;31mAllocation using brk fails. :c\033[0m\n\n");
+
 
     return 0;
 }
