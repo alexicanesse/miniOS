@@ -22,6 +22,8 @@ OFILES=$(CFILES:.c=.o)
 all: init $(OUT) test_hm
 
 init :
+	@echo "${PURPLE}Compiling main project${RESET}"
+	cd .. && make
 	@echo "${PURPLE}Copying library file${RESET}"
 	cp ../libminiOS.so libminiOS.so
 
