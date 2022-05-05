@@ -27,7 +27,7 @@
 #include "miniOS_private.h"
 
 
-
+ucontext_t *uThread_cleaner();
 
 vCPU *vCPUs = NULL; //list of all running vCPUs
 uThread *uThreads = NULL; //list of all running uThreads
@@ -114,6 +114,7 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
     getcontext(context);
     context->uc_stack.ss_sp = stack;
     context->uc_stack.ss_size = thread->stack_size;
+    context->uc_link = uThread_cleaner(thread);//the context to clean the uThread when it finishes
     makecontext(context, func, argc, argv);
     if(errno != 0){ //makecontext failed
         free(thread);
@@ -125,10 +126,6 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
     
     thread->running = 0;
     
-//    //add the thread to the list of threads
-//    thread->next = uThreads;
-//    uThreads = thread;
-    
     //we schedule it
     if(scheduler_add_thread(thread) != 0)
         return -1;
@@ -136,10 +133,13 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
     return 0;
 }
 
-int destruct_uThread(uThread* thread){
+void destruct_current_uThread(uThread* thread){
     if(thread == NULL)
-        return -1; //this is a protection
-#warning TODO remove the thread from the data structure of the scheduler
+        return; //this is a protection
+    
+    //we set the current_thread var to NULL so it aint gonna be scheduled again
+    current_context = NULL;
+    
     //we delete the thread from the thread list
     uThread *thread_it = uThreads;
     uThread *thread_buff = NULL;
@@ -154,17 +154,19 @@ int destruct_uThread(uThread* thread){
             free(thread->stack);
             free(thread->context);
             free(thread);
-            return 0;
+            return;
         }
         thread_buff = thread_it;
         thread_it = thread_it->next;
     }
-    //we haven't found the thread
-    return -1;
+    yield();
 }
 
-int yield(uThread* thread){
-#warning it still need to be implemented: it will send the same signal as the alarm to the scheduler
+/*
+ * send a sigusr1 to itself as if it was time to schedule an other thread
+ */
+int yield(void){
+    pthread_kill(pthread_self(), SIGUSR1);
     return 0;
 }
 
@@ -177,6 +179,7 @@ void *init(void* param){ //suspends until a signal is received
 
     sigaction(SIGUSR1, &_sigact, NULL);
 
+
     idle();
     return NULL;
 }
@@ -185,8 +188,9 @@ void idle(void){
     sigset_t sigmask;
     sigemptyset(&sigmask);
     
-    while(1) //the function wont terminate
+    while(1){
         sigsuspend(&sigmask); //there is no need to waste CPU cycles while we wait
+    }
 }
 
 void switch_process(int signum, siginfo_t *info, void *ptr){
@@ -211,3 +215,39 @@ void switch_process(int signum, siginfo_t *info, void *ptr){
             swapcontext(past_context, thread->context);
     }
 }
+
+ucontext_t *uThread_cleaner(uThread *uthread){
+    //get stack size of the os
+    struct rlimit lim;
+    getrlimit(RLIMIT_STACK, &lim);
+    long int stack_size = lim.rlim_cur;
+    
+    ucontext_t *context = (ucontext_t *) malloc(sizeof(ucontext_t));
+    if(context == NULL) //if malloc failed
+        return NULL; //malloc already sets errno correctly
+    
+    char *stack = (char*) malloc(stack_size);
+    if(stack == NULL){ //if malloc failed
+        free(context);
+        return NULL; //malloc already sets errno correctly
+    }
+    
+    //set up the context
+    errno = 0; //we must check errno because makecontext does not return a value
+    getcontext(context);
+    context->uc_stack.ss_sp = stack;
+    context->uc_stack.ss_size = stack_size;
+    char *arg = malloc(sizeof(uThread*));
+    sprintf(arg, "%p", uthread);
+    char* argv[1] = {arg};
+    makecontext(context, destruct_current_uThread, 1, argv);
+    if(errno != 0){ //makecontext failed
+        free(context);
+        free(stack);
+        fprintf(stderr, "%s", strerror(errno)); //prints the error message
+        return NULL;
+    }
+
+    return context;
+}
+

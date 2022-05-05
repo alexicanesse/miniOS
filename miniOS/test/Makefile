@@ -29,15 +29,15 @@ init :
 
 test_hm : test_hm.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -O2
+	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	
 $(OUT): $(OFILES)
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -O2
+	$(CC) -o $@ $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 
 %.o: %.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $< -g
 
 clean :
 	@echo "${RED}Cleaning${RESET}"

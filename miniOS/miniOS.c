@@ -34,7 +34,7 @@ void run(void){
     _sigact.sa_flags = SA_SIGINFO;
 
     sigaction(SIGALRM, &_sigact, NULL);
-    idle(); //wait()
+//    idle(); //wait()
 }
 
 void handle_alarm(int signum, siginfo_t *info, void *ptr){

@@ -27,15 +27,15 @@ all: $(OUT)
 
 $(OUT): $(OFILES)
 	@echo "${BLUE}Linking C library" $@ "${RESET}"
-	$(CC) -o $@ $^ $(LDFLAGS) -shared -lm -fPIC
+	$(CC) -o $@ $^ $(LDFLAGS) -shared -lm -fPIC -g
 
 vCPU.o : vCPU.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) -Wall -D_POSIX_C_SOURCE=199309L -fPIC -o $@ -c $<
+	$(CC) -Wall -D_POSIX_C_SOURCE=199309L -fPIC -o $@ -c $< -g
 
 %.o: %.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $< -g
 
 clean :
 	@echo "${RED}Cleaning${RESET}"
