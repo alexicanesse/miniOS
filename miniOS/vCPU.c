@@ -136,25 +136,25 @@ int create_uThread(void (*func)(void), int argc, const char * argv[]){
 void destruct_current_uThread(uThread* thread){
     if(thread == NULL)
         return; //this is a protection
-    
+
     //we set the current_thread var to NULL so it aint gonna be scheduled again
     current_context = NULL;
-    
+    current_uThread = NULL;
+
     //we delete the thread from the thread list
     uThread *thread_it = uThreads;
     uThread *thread_buff = NULL;
     while(thread_it != NULL){
-        if(thread_it->context == thread->context){
+        if(thread_it == thread){
             if(thread_buff == NULL)
                 uThreads = thread->next;
-            else{
+            else
                 thread_buff->next = thread->next;
-            }
-            
+
             free(thread->stack);
             free(thread->context);
             free(thread);
-            return;
+            yield();
         }
         thread_buff = thread_it;
         thread_it = thread_it->next;
@@ -166,7 +166,7 @@ void destruct_current_uThread(uThread* thread){
  * send a sigusr1 to itself as if it was time to schedule an other thread
  */
 int yield(void){
-    pthread_kill(pthread_self(), SIGUSR1);
+    switch_process(SIGUSR1, NULL, NULL);
     return 0;
 }
 
@@ -178,7 +178,6 @@ void *init(void* param){ //suspends until a signal is received
     _sigact.sa_flags = SA_SIGINFO;
 
     sigaction(SIGUSR1, &_sigact, NULL);
-
 
     idle();
     return NULL;
@@ -197,22 +196,20 @@ void switch_process(int signum, siginfo_t *info, void *ptr){
     //the thread is no longer running
     if(current_uThread != NULL)
         current_uThread->running = 0;
-    
+
     uThread *thread = next_to_schedule(current_uThread);
     current_uThread = thread;
-    
     
     if(thread == NULL)
         idle();
     else{
         thread->running = 1;
-        
         ucontext_t *past_context = current_context;
         current_context = thread->context;
         if(past_context == NULL)
-            setcontext(thread->context);
+            setcontext(current_context);
         else
-            swapcontext(past_context, thread->context);
+            swapcontext(past_context, current_context);
     }
 }
 
@@ -233,14 +230,12 @@ ucontext_t *uThread_cleaner(uThread *uthread){
     }
     
     //set up the context
-    errno = 0; //we must check errno because makecontext does not return a value
     getcontext(context);
     context->uc_stack.ss_sp = stack;
     context->uc_stack.ss_size = stack_size;
-    char *arg = malloc(sizeof(uThread*));
-    sprintf(arg, "%p", uthread);
-    char* argv[1] = {arg};
-    makecontext(context, destruct_current_uThread, 1, argv);
+    char* argv[1];;
+    argv[0] = (char *) uthread;
+    makecontext(context, destruct_current_uThread, 1, uthread);
     if(errno != 0){ //makecontext failed
         free(context);
         free(stack);
