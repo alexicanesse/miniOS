@@ -11,11 +11,15 @@
 #include <string.h>
 
 #include "miniOS.h"
-#include "miniOS_private.h"
 
 
 extern scheduler_type scheduler;
 extern vCPU *vCPUs;
+
+/*
+ * this handler is declared here because the user should not be able to access it
+ */
+void handle_alarm(int signum, siginfo_t *info, void *ptr);
 
 //this function create a timer well set up for the current quantum. Each time the alarm rings, we send a SIGUSR1 to each thread. It tells them to switch to the next uThread.
 void run(void){

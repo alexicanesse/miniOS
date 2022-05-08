@@ -24,10 +24,9 @@
 
 #include "vCPU.h"
 #include "scheduler.h"
-#include "miniOS_private.h"
 
 
-ucontext_t *uThread_cleaner();
+ucontext_t *uThread_cleaner(uThread *uthread);
 
 vCPU *vCPUs = NULL; //list of all running vCPUs
 uThread *uThreads = NULL; //list of all running uThreads
