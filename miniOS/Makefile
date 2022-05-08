@@ -40,11 +40,21 @@ $(OUT): $(OFILES)
 ./objects/%.o: ./src/%.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
+	
+test_hm: ./test/test_hm/test_hm.o
+	@echo "${BLUE}Linking C executable" $@ "${RESET}"
+	$(CC) -o ./test/test_hm/test_hm $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@echo "${PURPLE}Testing the heap memory manager!\n\n\n${RESET}"
+	./test/test_hm/test_hm
+
+./test/test_hm/test_hm.o: ./test/test_hm/test_hm.c
+	@echo "${PURPLE}Building C object" $@ "${RESET}"
+	$(CC) $(CFLAGS) -o $@ -c $< -g
 
 clean :
 	@echo "${RED}Cleaning${RESET}"
-	$(RM) $(OFILES)
+	$(RM) $(OFILES) ./test/test_hm/test_hm.o
 	
 mrproper : clean
 	@echo "${RED}Cleaning all files${RESET}"
-	$(RM) $(OUT)
+	$(RM) $(OUT) ./test/test_hm/test_hm
