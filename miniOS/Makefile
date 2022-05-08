@@ -41,7 +41,7 @@ $(OUT): $(OFILES)
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
 	
-test_hm: ./test/test_hm/test_hm.o
+test_hm: $(OUT) ./test/test_hm/test_hm.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
 	$(CC) -o ./test/test_hm/test_hm $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	@echo "${PURPLE}Testing the heap memory manager!\n\n\n${RESET}"
