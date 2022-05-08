@@ -16,24 +16,28 @@ endif
 
 
 OUT=libminiOS.so
-CFLAGS=-Wall -fPIC
+CFLAGS=-Wall -fPIC -I./include
 #CFLAGS=-Wall -D_POSIX_C_SOURCE=199309L -fPIC
 CC=gcc
 LDFLAGS = -pthread
-CFILES=$(wildcard *.c)
-OFILES=$(CFILES:.c=.o)
+
+FILES = scheduler vCPU memory uThread_tree uThread_queue miniOS
+CFILES = $(addsuffix .c, $(addprefix ./src/, $(FILES)))
+OFILES = $(addsuffix .o, $(addprefix ./objects/, $(FILES)))
+
 
 all: $(OUT)
+	
 
 $(OUT): $(OFILES)
 	@echo "${BLUE}Linking C library" $@ "${RESET}"
 	$(CC) -o $@ $^ $(LDFLAGS) -shared -lm -fPIC -g
 
-vCPU.o : vCPU.c
+./objects/vCPU.o : ./src/vCPU.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) -Wall -D_POSIX_C_SOURCE=199309L -fPIC -o $@ -c $< -g
+	$(CC) -D_POSIX_C_SOURCE=199309L $(CFLAGS) -o $@ -c $< -g
 
-%.o: %.c
+./objects/%.o: ./src/%.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
 
