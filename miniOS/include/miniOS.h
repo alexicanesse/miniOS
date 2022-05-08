@@ -40,4 +40,13 @@ extern int create_uThread(void (*func)(void), int argc, const char * argv[]); //
 extern void destruct_current_uThread(uThread* thread); //returns 0 unless it fails. errno is set if it fails
 extern int yield(void);
 
+
+
+/*
+ * Heap memory manager
+ */
+extern void *hm_malloc(long int size);
+extern void *hm_realloc(void* ptr, long int size);
+extern void hm_free(void *ptr);
+
 #endif /* miniOS_h */
