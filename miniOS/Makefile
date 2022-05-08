@@ -50,6 +50,16 @@ test_hm: $(OUT) ./test/test_hm/test_hm.o
 ./test/test_hm/test_hm.o: ./test/test_hm/test_hm.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
+	
+test_vCPU: $(OUT) ./test/test_vCPU/test_vCPU.o
+	@echo "${BLUE}Linking C executable" $@ "${RESET}"
+	$(CC) -o ./test/test_vCPU/test_vCPU $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@echo "${PURPLE}Testing vCPUs!\n\n\n${RESET}"
+	./test/test_vCPU/test_vCPU
+
+./test/test_vCPU/test_vCPU.o: ./test/test_vCPU/test_vCPU.c
+	@echo "${PURPLE}Building C object" $@ "${RESET}"
+	$(CC) $(CFLAGS) -o $@ -c $< -g
 
 clean :
 	@echo "${RED}Cleaning${RESET}"

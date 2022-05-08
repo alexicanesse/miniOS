@@ -20,8 +20,6 @@
 #include "test_hm.h"
 #include "miniOS.h"
 
-
-
 int main(){
     printf("\033[0;34mThe first batch of tests uses brk allocation.\033[0m\n");
 

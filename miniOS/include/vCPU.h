@@ -35,6 +35,17 @@ void destruct_current_uThread(uThread* thread); //returns 0 unless it fails. err
 int yield(void);
 
 
+struct vCPU{
+    pthread_t *pthread;
+    struct vCPU *next; //used to make lists
+};
+typedef struct vCPU vCPU;
+
+void *init(void* param);
+void idle(void);
+void switch_process(int signum, siginfo_t *info, void *ptr);
+
+
 
 
 

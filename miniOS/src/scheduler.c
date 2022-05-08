@@ -8,7 +8,6 @@
 
 #include "scheduler.h"
 #include "vCPU.h"
-#include "miniOS_private.h"
 #include "uThread_queue.h"
 
 uThread_queue *queue;

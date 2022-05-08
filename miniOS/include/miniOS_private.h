@@ -12,15 +12,7 @@
 #define miniOS_private_h
 
 //vcpu
-struct vCPU{
-    pthread_t *pthread;
-    struct vCPU *next; //used to make lists
-};
-typedef struct vCPU vCPU;
 
-void *init(void* param);
-void idle(void);
-void switch_process(int signum, siginfo_t *info, void *ptr);
 
 
 
@@ -28,11 +20,7 @@ void switch_process(int signum, siginfo_t *info, void *ptr);
 
 
 //scheduler
-int scheduler_add_thread(uThread *thread); //return -1 if fails and sets errno. Otherwise, return 0
 
-uThread *RR_func(void); //Round-robin scheduling
-uThread *CFS_func(void); //Completely Fair Scheduler
-uThread *next_to_schedule(uThread * thread);
 
 
 //miniOS

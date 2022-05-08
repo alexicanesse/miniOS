@@ -10,9 +10,9 @@
 #include <stdio.h>
 
 #include "test.h"
-#include "../miniOS.h"
-#include "../miniOS_private.h"
+#include "miniOS.h"
 
+#warning TODO
 
 void f_t1(void){ //thread 1
     printf("here\n");
@@ -31,7 +31,6 @@ void f_t2(void){ //thread 2
 }
 
 
-#include "../miniOS_private.h"
 extern vCPU *vCPUs;
 
 int main(){

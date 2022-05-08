@@ -10,4 +10,6 @@
 
 #include <stdio.h>
 
+#warning TODO
+
 #endif /* test_hm_h */

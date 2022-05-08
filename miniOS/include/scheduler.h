@@ -25,7 +25,11 @@ enum scheduler_policies { RR, CFS };
 void config_scheduler(int quantum, enum scheduler_policies scheduler_policy);
 
 
- 
+int scheduler_add_thread(uThread *thread); //return -1 if fails and sets errno. Otherwise, return 0
+
+uThread *RR_func(void); //Round-robin scheduling
+uThread *CFS_func(void); //Completely Fair Scheduler
+uThread *next_to_schedule(uThread * thread);
 
 
 
