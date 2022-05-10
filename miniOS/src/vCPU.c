@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <signal.h>
 
 #include "vCPU.h"
 #include "scheduler.h"

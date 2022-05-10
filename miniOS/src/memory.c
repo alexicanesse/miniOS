@@ -96,12 +96,16 @@ void *hm_malloc_func(long int size, int secure){
         size_t additionnal_size_available = 0;
         if(mem_block_it->is_secure)
             additionnal_size_available = PAGE_SIZE + 1;
+        //
+        
         
         if(mem_block_it->is_used == 0 && mem_block_it->size + additionnal_size_available >= size + additionnal_size_requiered){ //the block is big enough.
             address = mem_block_it->ptr;
 
             //if the size is big enough to slice it, we slice it
-            if(mem_block_it->size > size + sizeof(mem_block)){
+            if(mem_block_it->size + additionnal_size_available > size
+                                                            + sizeof(mem_block)
+                                                            + additionnal_size_requiered){
 
                 //we create the new block and insert it
                 mem_block *block = (mem_block *) address + size;

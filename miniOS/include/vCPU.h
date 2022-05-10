@@ -12,7 +12,7 @@
 
 #include <pthread.h>
 #include <unistd.h>
-#include <signal.h>
+//#include <signal.h>
 #include <ucontext.h>
 
 
@@ -43,7 +43,7 @@ typedef struct vCPU vCPU;
 
 void *init(void* param);
 void idle(void);
-void switch_process(int signum, siginfo_t *info, void *ptr);
+void switch_process();
 
 
 
