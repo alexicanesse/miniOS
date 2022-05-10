@@ -26,6 +26,8 @@
 #include "vCPU.h"
 #include "scheduler.h"
 
+typedef void (* ucfunc_t)(void);
+
 
 ucontext_t *uThread_cleaner(uThread *uthread);
 
@@ -233,9 +235,9 @@ ucontext_t *uThread_cleaner(uThread *uthread){
     getcontext(context);
     context->uc_stack.ss_sp = stack;
     context->uc_stack.ss_size = stack_size;
-    char* argv[1];;
-    argv[0] = (char *) uthread;
-    makecontext(context, destruct_current_uThread, 1, argv);
+//    char* argv[1];;
+//    argv[0] = (char *) uthread;
+    makecontext(context, (ucfunc_t)destruct_current_uThread, 1, uthread);
     if(errno != 0){ //makecontext failed
         free(context);
         free(stack);
