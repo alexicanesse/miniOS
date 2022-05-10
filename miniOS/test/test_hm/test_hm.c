@@ -217,7 +217,7 @@ int main(){
      */
     char *p6 = (char*) pmalloc(12);
     if(p6 != NULL){
-        for(int i = 0; i < 12; i++)
+        for(int i = 0; i < 1; i++)
             *(p6 + i) = 'a';
         printf("\033[0;32mTest 10 works!\033[0m\n\n");
     }

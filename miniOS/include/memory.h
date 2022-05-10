@@ -27,14 +27,8 @@ typedef struct mem_block mem_block;
 void insert_block(mem_block *block);
 
 
-/*
- * This function is the core malloc function
- * hm_malloc just call it with secure = 0 and pmalloc with secure = 1
- */
-void *hm_malloc_func(long int size, int secure);
-
-void *hm_malloc(long int size);
-void *pmalloc(long int size);
+void *hm_malloc(size_t size);
+void *pmalloc(size_t size);
 void *hm_realloc(void* ptr, long int size);
 void hm_free(void *ptr);
 

@@ -28,9 +28,10 @@ void fusion_with_next(mem_block *block);
 
 
 
-pthread_mutex_t mutex_mem_list = PTHREAD_MUTEX_INITIALIZER; //lock use to make some ressources thread-safe
+pthread_mutex_t mutex_mem_list = PTHREAD_MUTEX_INITIALIZER; //lock used to make some ressources thread-safe
 
 mem_block *mem_list = NULL;
+mem_block *mem_list_secure = NULL;
 mem_block *last_brk = NULL;
 
 
@@ -70,43 +71,98 @@ void insert_block(mem_block *block){
 }
 
 
-void *hm_malloc(long int size){
-    return hm_malloc_func(size, 0);
+/*
+ * pmalloc uses cannaries, underflow guard page and overflow guard page
+ * therefor, any allocations will allocate at least a page
+ * and two other pages will be allocated just for security
+ * this function should only be used for critical data has it has a
+ * huge performance overhead
+ */
+void *pmalloc(size_t size){
+    size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
+    
+    void* address = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
+                         address will be selected by the system so as not to overlap any existing
+                         mappings in the address space. */
+         size + sizeof(mem_block) /* the data and the metadata */
+                   + 2         /* the canary */
+                   + PAGESIZE  /* the page guard before the data */
+                   + PAGESIZE, /* the page guard after the data */
+         PROT_READ | PROT_WRITE, /* we can do whatever we want with it */
+         MAP_SHARED | MAP_ANONYMOUS,
+         0,
+         0);
+    
+    if(address == MAP_FAILED)
+        return NULL;
+    
+    /*
+     * the page guards
+     */
+    if(mprotect(address, PAGESIZE, PROT_NONE)
+       || mprotect(address
+                   + PAGESIZE
+                   + size
+                   + sizeof(mem_block)
+                   + 2
+                   + (PAGESIZE - ((+ size
+                                  + sizeof(mem_block)
+                                  + 2) % PAGESIZE)
+                      ),
+                   PAGESIZE, PROT_NONE)){
+        /*
+         * one of the page guard protect failed
+         * we unmap everything and return NULL
+         */
+        munmap(address, size + sizeof(mem_block) + 2 + 2*PAGESIZE);
+        return NULL; /* errno is already set */
+    }
+    address += PAGESIZE;
+    
+    //we create the new block and insert it
+    mem_block *block = (mem_block *) address;
+    address += sizeof(mem_block);
+    block->ptr = address;
+    block->size = size
+                + sizeof(mem_block)
+                + 2
+                + (PAGESIZE - ((+ size
+                               + sizeof(mem_block)
+                               + 2) % PAGESIZE)
+                   );
+    block->is_used = 1;
+    block->is_brk = 0;
+    block->is_secure = 1;
+    block->next = NULL;
+    block->prev = NULL;
+#warning METADATA SHOULD BE ON GUARD PAGE
+    
+#warning TODO insert the block in list
+    //insert_block(block);
+
+
+
+    return address;
 }
 
-void *pmalloc(long int size){
-    return hm_malloc_func(size, 1);
-}
-
-void *hm_malloc_func(long int size, int secure){
+void *hm_malloc(size_t size){
     /*
      * We look for a block big enough
      */
-    size_t PAGE_SIZE = sysconf(_SC_PAGESIZE);
-    
     pthread_mutex_lock(&mutex_mem_list);
     void* address = NULL;
     mem_block *mem_block_it = mem_list;
-    while(mem_block_it != NULL && address == NULL){
-        //handle the additionnal space requiered for security
-        size_t additionnal_size_requiered = 0;
-        if(secure)
-            additionnal_size_requiered = PAGE_SIZE + 1;
-        
-        size_t additionnal_size_available = 0;
-        if(mem_block_it->is_secure)
-            additionnal_size_available = PAGE_SIZE + 1;
-        //
-        
-        
-        if(mem_block_it->is_used == 0 && mem_block_it->size + additionnal_size_available >= size + additionnal_size_requiered){ //the block is big enough.
+    while(mem_block_it != NULL && address == NULL){//as long as we can iterate and haven't found any block
+        if(mem_block_it->is_used == 0 && mem_block_it->size >= size){ //the block is big enough.
             address = mem_block_it->ptr;
 
-            //if the size is big enough to slice it, we slice it
-            if(mem_block_it->size + additionnal_size_available > size
-                                                            + sizeof(mem_block)
-                                                            + additionnal_size_requiered){
-
+            /*
+             * if the size is big enough to slice it, we slice it
+             * there is not any sanitary check to ensure the block has been
+             * allocated using sbrk. Though, it cannot have been allocated using
+             * mmap because it would have been numap when it has been freed
+             */
+            if(mem_block_it->size > size + sizeof(mem_block)){
                 //we create the new block and insert it
                 mem_block *block = (mem_block *) address + size;
                 block->ptr = address + size + sizeof(mem_block);
@@ -129,7 +185,10 @@ void *hm_malloc_func(long int size, int secure){
         mem_block_it = mem_block_it->next;
     }
 
-    if(address == NULL){ //there is not any block big enough
+    /*
+     * There is not any block big enough
+     */
+    if(address == NULL){
         int is_brk = 0;
         if(size < M_MMAP_THRESHOLD){
             /*

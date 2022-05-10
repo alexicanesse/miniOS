@@ -31,19 +31,16 @@ $(DIRECTORIES) :
 	mkdir $@
 
 all: $(OUT)
-	
 
 $(OUT): $(OFILES)
 	@echo "${BLUE}Linking C library" $@ "${RESET}"
 	$(CC) -o $@ $^ $(LDFLAGS) -shared -lm -fPIC -g
 
-$(OFILES): $(DIRECTORIES)
-
-./objects/vCPU.o : ./src/vCPU.c
+./objects/vCPU.o : ./src/vCPU.c $(DIRECTORIES)
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) -D_POSIX_C_SOURCE=199309L $(CFLAGS) -o $@ -c $< -g
 
-./objects/%.o: ./src/%.c
+./objects/%.o: ./src/%.c $(DIRECTORIES)
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
 	
