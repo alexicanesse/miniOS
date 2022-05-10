@@ -235,7 +235,7 @@ ucontext_t *uThread_cleaner(uThread *uthread){
     context->uc_stack.ss_size = stack_size;
     char* argv[1];;
     argv[0] = (char *) uthread;
-    makecontext(context, destruct_current_uThread, 1, uthread);
+    makecontext(context, destruct_current_uThread, 1, argv);
     if(errno != 0){ //makecontext failed
         free(context);
         free(stack);
