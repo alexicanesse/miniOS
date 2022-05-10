@@ -28,7 +28,6 @@ void fusion_with_next(mem_block *block);
 
 
 
-
 pthread_mutex_t mutex_mem_list = PTHREAD_MUTEX_INITIALIZER; //lock use to make some ressources thread-safe
 
 mem_block *mem_list = NULL;
@@ -72,14 +71,33 @@ void insert_block(mem_block *block){
 
 
 void *hm_malloc(long int size){
+    return hm_malloc_func(size, 0);
+}
+
+void *pmalloc(long int size){
+    return hm_malloc_func(size, 1);
+}
+
+void *hm_malloc_func(long int size, int secure){
     /*
      * We look for a block big enough
      */
+    size_t PAGE_SIZE = sysconf(_SC_PAGESIZE);
+    
     pthread_mutex_lock(&mutex_mem_list);
     void* address = NULL;
     mem_block *mem_block_it = mem_list;
     while(mem_block_it != NULL && address == NULL){
-        if(mem_block_it->is_used == 0 && mem_block_it->size >= size){ //the block is big enough.
+        //handle the additionnal space requiered for security
+        size_t additionnal_size_requiered = 0;
+        if(secure)
+            additionnal_size_requiered = PAGE_SIZE + 1;
+        
+        size_t additionnal_size_available = 0;
+        if(mem_block_it->is_secure)
+            additionnal_size_available = PAGE_SIZE + 1;
+        
+        if(mem_block_it->is_used == 0 && mem_block_it->size + additionnal_size_available >= size + additionnal_size_requiered){ //the block is big enough.
             address = mem_block_it->ptr;
 
             //if the size is big enough to slice it, we slice it
@@ -91,6 +109,7 @@ void *hm_malloc(long int size){
                 block->size = mem_block_it->size - size - sizeof(mem_block);
                 block->is_used = 0;
                 block->is_brk = mem_block_it->is_brk;
+                block->is_secure = 0;
                 block->next = mem_block_it->next;
                 block->prev = mem_block_it;
 
@@ -137,6 +156,7 @@ void *hm_malloc(long int size){
         block->size = size;
         block->is_used = 1;
         block->is_brk = is_brk;
+        block->is_secure = 0;
         block->next = NULL;
         block->prev = NULL;
         insert_block(block);
@@ -168,6 +188,7 @@ void *hm_realloc(void* ptr, long int size){
                         block->size = mem_block_it->size - size - sizeof(mem_block);
                         block->is_used = 0;
                         block->is_brk = 1;
+                        block->is_secure = 0;
                         block->next = mem_block_it->next;
                         block->prev = mem_block_it;
 
