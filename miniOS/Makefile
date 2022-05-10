@@ -25,8 +25,11 @@ FILES = scheduler vCPU memory uThread_tree uThread_queue miniOS
 CFILES = $(addsuffix .c, $(addprefix ./src/, $(FILES)))
 OFILES = $(addsuffix .o, $(addprefix ./objects/, $(FILES)))
 
+init:
+	@echo "${PURPLE}Creating directory ./objects if missing${RESET}"
+	mkdir -p ./objects
 
-all: $(OUT)
+all: init $(OUT)
 	
 
 $(OUT): $(OFILES)
