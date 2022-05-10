@@ -24,17 +24,20 @@ LDFLAGS = -pthread
 FILES = scheduler vCPU memory uThread_tree uThread_queue miniOS
 CFILES = $(addsuffix .c, $(addprefix ./src/, $(FILES)))
 OFILES = $(addsuffix .o, $(addprefix ./objects/, $(FILES)))
+DIRECTORIES = ./objects
 
-init:
-	@echo "${PURPLE}Creating directory ./objects if missing${RESET}"
-	mkdir -p ./objects
+$(DIRECTORIES) :
+	@echo "${PURPLE}Creating missing directory" $@ "${RESET}"
+	mkdir $@
 
-all: init $(OUT)
+all: $(OUT)
 	
 
 $(OUT): $(OFILES)
 	@echo "${BLUE}Linking C library" $@ "${RESET}"
 	$(CC) -o $@ $^ $(LDFLAGS) -shared -lm -fPIC -g
+
+$(OFILES): $(DIRECTORIES)
 
 ./objects/vCPU.o : ./src/vCPU.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
