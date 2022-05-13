@@ -224,6 +224,9 @@ int main(){
     else
         printf("\033[0;31mTest 10 fails.\033[0m\n\n");
 
+    
+    char* test = cls_malloc(45);
+    printf("%p", test);
 
 //    /*
 //     * Test 2: reallocation using brk when the pointer is the last one

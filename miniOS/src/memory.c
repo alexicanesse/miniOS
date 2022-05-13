@@ -5,7 +5,10 @@
 //  Created on 15/04/2022.
 //
 
-//recommanded default value
+/*
+ * recommanded default value
+ * must be a power of two to be fully respected
+ */
 #define M_MMAP_THRESHOLD 128*1024
 
 
@@ -20,19 +23,245 @@
 #include <sys/types.h> //requiered for mmap
 #include <sys/mman.h>
 #include <string.h>
+#include <math.h>
 
 #include "memory.h"
 
+#define MAX_CLASS_INDEX 12
+#define MAX_PAGE_CLASS 1000000000
+#define MIN_NUMBER_OF_BLOCK_TO_ALLOC 10
+#define NUMBER_OF_PAGES_FOR_FREE_LIST 5
+#define CANARY ((char) 42)
 
-void fusion_with_next(mem_block *block);
+/*
+ * the classes 0->MAX_CLASS_INDEX-1 will be used for allocation of size >= 2^i and < 2^(i+1)
+ * The last class is used for all other allocations
+ */
+mem_class_t *class_array = NULL;
 
+int initclsarr(void){
+    size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
+    
+    void* address = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
+                         address will be selected by the system so as not to overlap any existing
+                         mappings in the address space. */
+                    PAGESIZE /* the page for the data*/
+                   + PAGESIZE  /* the page guard before the data */
+                   + PAGESIZE, /* the page guard after the data */
+         PROT_READ | PROT_WRITE, /* we can do whatever we want with it */
+         MAP_SHARED | MAP_ANONYMOUS,
+         0,
+         0);
+    
+    if(address == MAP_FAILED)
+        return -1;
 
+    /* set guard pages */
+    if(mprotect(address, PAGESIZE, PROT_NONE) || mprotect(address + 2*PAGESIZE, PAGESIZE, PROT_NONE)){
+        munmap(address, 3*PAGESIZE); /* sets errno if it fails */
+        return -1;
+    }
 
-pthread_mutex_t mutex_mem_list = PTHREAD_MUTEX_INITIALIZER; //lock used to make some ressources thread-safe
+    class_array = address + PAGESIZE; /* + PAGESIZE because the first page is a guard page */
+    for(int i = 0; i <= MAX_CLASS_INDEX; i++){ /* init classes */
+        class_array[i].first_page_addr = NULL;
+        class_array[i].free_list = NULL;
+        class_array[i].mutex = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+        class_array[i].last_used_page = -1;
+        class_array[i].free_list_size = 0;
+    }
+    return 0;
+}
 
+int initclass(int cls_index){
+    size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
+    
+    void *addr = mmap(
+         0x0, /* If addr is zero and MAP_FIXED is not specified, then an
+               address will be selected by the system so as not to overlap any existing
+               mappings in the address space. */
+         PAGESIZE * MAX_PAGE_CLASS,
+         PROT_NONE,
+         MAP_SHARED | MAP_ANONYMOUS,
+         0,
+         0);
+    
+    if(addr == MAP_FAILED)
+        return -1;
+    
+    class_array[cls_index].first_page_addr = addr;
+    
+    
+    /*
+     * create the free list and secure it with guard pages.
+     */
+    void* free_list = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
+                         address will be selected by the system so as not to overlap any existing
+                         mappings in the address space. */
+                    NUMBER_OF_PAGES_FOR_FREE_LIST * PAGESIZE, /* this includes the two page guards */
+         PROT_READ | PROT_WRITE, /* we can do whatever we want with it */
+         MAP_SHARED | MAP_ANONYMOUS,
+         0,
+         0);
+    
+    if(free_list == MAP_FAILED)
+        return -1;
+    
+    /* set guard pages */
+    if(mprotect(free_list, PAGESIZE, PROT_NONE) || mprotect(free_list + (NUMBER_OF_PAGES_FOR_FREE_LIST - 1)*PAGESIZE, PAGESIZE, PROT_NONE)){
+        munmap(addr, PAGESIZE * MAX_PAGE_CLASS); /* sets errno if it fails */
+        munmap(free_list, NUMBER_OF_PAGES_FOR_FREE_LIST*PAGESIZE); /* sets errno if it fails */
+        return -1;
+    }
+    
+    
+    /* free list is a FIFO. It grows backward. We point to the next element to be read */
+    class_array[cls_index].free_list = free_list + 4*PAGESIZE;
+    class_array[cls_index].free_list_size = 0;
+    return 0;
+}
+
+int clsindex(size_t size){
+    if(size == 0) /* we cannot take the log of 0 */
+        return -1;
+    
+    int cls_index = ceil(log2(size + 1)); /* +1 because we need a byte for the cannary */
+    if(cls_index <= MAX_CLASS_INDEX)
+        return cls_index;
+    return MAX_CLASS_INDEX; /* the last class handles bigger allocations */
+}
+
+int addfreespace(int cls_index){
+    if(cls_index == MAX_CLASS_INDEX)
+        return -1;
+    
+    size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
+    
+    /* we add enough pages to allocate at least MIN_NUMBER_OF_BLOCK_TO_ALLOC new blocks */
+    int number_of_page_to_add = (int) (MIN_NUMBER_OF_BLOCK_TO_ALLOC * pow(2, cls_index) / PAGESIZE) + 1;
+    
+    pthread_mutex_lock(&class_array[cls_index].mutex);
+    /* we try to mprotect them accordingly */
+    if(mprotect(class_array[cls_index].first_page_addr + class_array[cls_index].last_used_page*PAGESIZE, PAGESIZE*number_of_page_to_add, PROT_EXEC | PROT_READ | PROT_WRITE) != 0)
+        return -1;
+    
+    /* add the new blocks to the free list*/
+    size_t size = pow(2, cls_index + 1); /* 2^{i+1} */
+    void *ptr = class_array[cls_index].first_page_addr + class_array[cls_index].last_used_page*PAGESIZE;
+    while((size_t) ptr < (size_t) class_array[cls_index].first_page_addr
+          + (class_array[cls_index].last_used_page + number_of_page_to_add)*PAGESIZE){
+        mem_block *block = class_array[cls_index].free_list - sizeof(mem_block); /* FIFO (grows backward) */
+        block->size = size;
+        block->ptr = ptr;
+        block->next = class_array[cls_index].free_list;
+        
+        class_array[cls_index].free_list = block; /* add the block to the list */
+        ++class_array[cls_index].free_list_size; /* update the size of the list */
+    }
+    
+    class_array[cls_index].last_used_page += number_of_page_to_add + 1; /* +1 because the page next to it is dedicated to be a guard page */
+    
+    pthread_mutex_unlock(&class_array[cls_index].mutex);
+    return 0;
+}
+
+void *cls_malloc(size_t size){
+    if(size <= 0) /* it is a protection */
+        return NULL;
+    
+    int cls_index = clsindex(size);
+    
+    if(cls_index == MAX_CLASS_INDEX){
+        ;
+#warning TODO BIG ALLOC
+    }
+
+    /* checks if classes have been init and init the array if it need to */
+    if(class_array == NULL){
+        if(initclsarr() != 0)
+            return NULL;
+    }
+
+    /* checks if the class has already been init and init it if it needs to */
+    if(class_array[cls_index].free_list == NULL){
+        if(initclass(cls_index) != 0)
+            return NULL;
+    }
+    
+    /* check if there is a free block and add some block if there isnt any left */
+    if(class_array[cls_index].free_list_size != 0){
+        if(addfreespace(cls_index) != 0)
+            return NULL;
+    }
+
+    /*
+     * we remove a block from the free list (under lock)
+     * we set the cannaries (without the lock)
+     * we return a pointer to the first byte of the block
+     */
+    pthread_mutex_lock(&class_array[cls_index].mutex);
+    mem_block *block = class_array[cls_index].free_list;
+    printf("here\n");
+    class_array[cls_index].free_list = block->next; /* update the list */
+    printf("here\n");
+    --class_array[cls_index].free_list_size; /* update the list size */
+    pthread_mutex_unlock(&class_array[cls_index].mutex);
+    
+    block->ptr[block->size - 1] = CANARY; /* the size has been choosen to beat least size + 1 */
+    return block->ptr;
+}
+/*
+ end of new implementation
+ */
+
+pthread_mutex_t mutex_mem_list = PTHREAD_MUTEX_INITIALIZER; /* lock used to make some ressources thread-safe */
+pthread_mutex_t mutex_mem_list_secured = PTHREAD_MUTEX_INITIALIZER; /* lock used to make some ressources thread-safe */
+
+#warning NEED TO MOVE METADATA OF NOT SECURED BLOCKS
 mem_block *mem_list = NULL;
 mem_block *mem_list_secure = NULL;
 mem_block *last_brk = NULL;
+mem_block *last_secured = NULL;
+
+
+/*
+ * This function allocated a page secured page page guards to store
+ * the metadata of allocations
+ */
+mem_block *init_mem_block(void){
+    size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
+    
+    void* address = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
+                         address will be selected by the system so as not to overlap any existing
+                         mappings in the address space. */
+                    PAGESIZE /* the page for the data*/
+                   + PAGESIZE  /* the page guard before the data */
+                   + PAGESIZE, /* the page guard after the data */
+         PROT_READ | PROT_WRITE, /* we can do whatever we want with it */
+         MAP_SHARED | MAP_ANONYMOUS,
+         0,
+         0);
+    
+    if(address == MAP_FAILED)
+        return NULL;
+    
+    /* set guard pages */
+    if(mprotect(address, PAGESIZE, PROT_NONE) || mprotect(address + 2*PAGESIZE, PAGESIZE, PROT_NONE)){
+        munmap(address, 3*PAGESIZE); /* sets errno if it fails */
+        return NULL;
+    }
+    address += PAGESIZE;
+    
+    mem_block *block = address;
+    block->size = 0;
+    block->ptr = NULL;
+    block->is_secure = 0;
+    block->is_used = 0;
+    block->prev = NULL;
+    block->is_brk = 0;
+    block->next = block;
+    return address;
+}
 
 
 //be careful, this is not thread safe
@@ -84,7 +313,7 @@ void *pmalloc(size_t size){
     void* address = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
                          address will be selected by the system so as not to overlap any existing
                          mappings in the address space. */
-         size + sizeof(mem_block) /* the data and the metadata */
+         size /* the data */
                    + 2         /* the canary */
                    + PAGESIZE  /* the page guard before the data */
                    + PAGESIZE, /* the page guard after the data */
@@ -103,45 +332,45 @@ void *pmalloc(size_t size){
        || mprotect(address
                    + PAGESIZE
                    + size
-                   + sizeof(mem_block)
                    + 2
-                   + (PAGESIZE - ((+ size
-                                  + sizeof(mem_block)
-                                  + 2) % PAGESIZE)
+                   + (PAGESIZE - ((+ size + 2) % PAGESIZE)
                       ),
                    PAGESIZE, PROT_NONE)){
         /*
          * one of the page guard protect failed
          * we unmap everything and return NULL
          */
-        munmap(address, size + sizeof(mem_block) + 2 + 2*PAGESIZE);
+        munmap(address, size + 2 + 2*PAGESIZE);
         return NULL; /* errno is already set */
     }
-    address += PAGESIZE;
     
-    //we create the new block and insert it
-    mem_block *block = (mem_block *) address;
-    address += sizeof(mem_block);
+    /* we create the new block and insert it */
+    pthread_mutex_lock(&mutex_mem_list_secured);
+    if(mem_list_secure == NULL){
+        mem_list_secure = init_mem_block();
+        last_secured = mem_list_secure;
+        if(mem_list_secure == NULL){
+            pthread_mutex_unlock(&mutex_mem_list_secured);
+            munmap(address, size + 2 + 2*PAGESIZE);
+            return NULL;
+        }
+    }
+    
+    mem_block *block = last_secured->next;
+        
+    address += PAGESIZE; /* move after the guard page */
     block->ptr = address;
-    block->size = size
-                + sizeof(mem_block)
-                + 2
-                + (PAGESIZE - ((+ size
-                               + sizeof(mem_block)
-                               + 2) % PAGESIZE)
-                   );
+    block->size = ((size + 2)/PAGESIZE + 1)*PAGESIZE - 2; /* mmap always map full pages */
     block->is_used = 1;
     block->is_brk = 0;
     block->is_secure = 1;
-    block->next = NULL;
-    block->prev = NULL;
-#warning METADATA SHOULD BE ON GUARD PAGE
+    block->next = block + sizeof(mem_block);
+    block->prev = last_secured;
     
-#warning TODO insert the block in list
-    //insert_block(block);
-
-
-
+    last_secured->next = block;
+    last_secured = block;
+#warning TODO canaries
+    pthread_mutex_unlock(&mutex_mem_list_secured);
     return address;
 }
 
