@@ -31,7 +31,7 @@
 #define MAX_CLASS_INDEX 12
 #define MAX_PAGE_CLASS 1000000000
 #define MIN_NUMBER_OF_BLOCK_TO_ALLOC 10
-#define NUMBER_OF_PAGES_FOR_FREE_LIST 15
+#define NUMBER_OF_PAGES_FOR_FREE_LIST 300
 #define CANARY ((char) 42)
 
 /*
@@ -114,7 +114,7 @@ int initclass(int cls_index){
         munmap(free_list, NUMBER_OF_PAGES_FOR_FREE_LIST*PAGESIZE); /* sets errno if it fails */
         return -1;
     }
-    
+
     /* free list is a FIFO. It grows backward. We point to the next element to be read */
     class_array[cls_index].free_list = free_list + (NUMBER_OF_PAGES_FOR_FREE_LIST-1)*PAGESIZE;
     class_array[cls_index].free_list_size = 0;
@@ -146,12 +146,11 @@ int addfreespace(int cls_index){
         return -1;
     
     /* add the new blocks to the free list */
-    size_t size = pow(2, cls_index + 1); /* 2^{i+1} */
+    size_t size = 2 << (cls_index - 1); /* fast 2^{i} */
     
-
     void *ptr = class_array[cls_index].first_page_addr + (class_array[cls_index].last_used_page + 1)*PAGESIZE;
-    while((size_t) ptr + size < (size_t) class_array[cls_index].first_page_addr
-          + (class_array[cls_index].last_used_page + 1 + number_of_page_to_add)*PAGESIZE){
+    while((size_t) ptr + size < (size_t) (class_array[cls_index].first_page_addr
+          + (class_array[cls_index].last_used_page + 1 + number_of_page_to_add)*PAGESIZE)){
         mem_block_t *block = class_array[cls_index].free_list - sizeof(mem_block_t); /* FIFO (grows backward) */
         block->size = size;
         block->ptr = ptr;
@@ -161,7 +160,6 @@ int addfreespace(int cls_index){
         ++class_array[cls_index].free_list_size; /* update the size of the list */
         ptr += size;
     }
-    
     class_array[cls_index].last_used_page += number_of_page_to_add + 1; /* +1 because the page next to it is dedicated to be a guard page */
     
     pthread_mutex_unlock(&class_array[cls_index].mutex);

@@ -16,12 +16,15 @@
 #include <unistd.h>
 #include <errno.h>
 
-
 #include "test_hm.h"
 #include "miniOS.h"
 
+
+#include <stdio.h>
+#include <stdlib.h>
+
 int main(){
-    
+
     return 0;
 }
 
