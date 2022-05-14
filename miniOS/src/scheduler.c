@@ -56,13 +56,13 @@ uThread *CFS_func(void) {
 
 //asks the function associated with the current policy what to schedule next
 uThread *next_to_schedule(uThread *thread) {
-    if (policy == RR) {
+    if(policy == RR){
         if (thread != NULL) {
             thread->running = 0;
             enqueue(thread);
         }
         return RR_func();
-    } else if (policy == CFS) {//else -> CFS
+    } else{//else -> CFS
         if (thread != NULL) {
             thread->running = 0;
             insert(thread, -1, tree); //TODO: -1 is a placeholder, use preemp_notifier to get the real value
