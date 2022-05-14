@@ -21,7 +21,7 @@ CFLAGS=-Wall -fPIC -I./include
 CC=gcc
 LDFLAGS = -pthread
 
-FILES = scheduler vCPU memory uThread_tree uThread_queue miniOS
+FILES = scheduler vCPU memory memory_legacy uThread_tree uThread_queue miniOS
 CFILES = $(addsuffix .c, $(addprefix ./src/, $(FILES)))
 OFILES = $(addsuffix .o, $(addprefix ./objects/, $(FILES)))
 DIRECTORIES = ./objects
@@ -47,10 +47,20 @@ $(OUT): $(OFILES)
 test_hm: $(OUT) ./test/test_hm/test_hm.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
 	$(CC) -o ./test/test_hm/test_hm $^ $(LDFLAGS) -L. -lminiOS -O2 -g
-	@echo "${PURPLE}Testing the heap memory manager!\n\n\n${RESET}"
+	@echo "${PURPLE}Testing the heap memory manager!\n${RESET}"
 	./test/test_hm/test_hm
 
 ./test/test_hm/test_hm.o: ./test/test_hm/test_hm.c
+	@echo "${PURPLE}Building C object" $@ "${RESET}"
+	$(CC) $(CFLAGS) -o $@ -c $< -g
+	
+test_hm_legacy: $(OUT) ./test/test_hm_legacy/test_hm_legacy.o
+	@echo "${BLUE}Linking C executable" $@ "${RESET}"
+	$(CC) -o ./test/test_hm_legacy/test_hm_legacy $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@echo "${PURPLE}Testing the legacy heap memory manager!\n${RESET}"
+	./test/test_hm_legacy/test_hm_legacy
+
+./test/test_hm_legacy/test_hm_legacy.o: ./test/test_hm_legacy/test_hm_legacy.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
 	

@@ -11,7 +11,8 @@
 #include <string.h>
 
 #include "miniOS.h"
-
+#include "vCPU.h"
+#include "scheduler.h"
 
 extern scheduler_type scheduler;
 extern vCPU *vCPUs;

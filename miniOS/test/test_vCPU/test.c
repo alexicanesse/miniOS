@@ -33,7 +33,7 @@ void f_t2(void){ //thread 2
 
 extern vCPU *vCPUs;
 
-int main(){
+int main1(){
     printf("%d\n", create_vCPU(1));
     config_scheduler(2, RR);
     run();

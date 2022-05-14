@@ -10,9 +10,9 @@
 #ifndef miniOS_h
 #define miniOS_h
 
-#include "vCPU.h"
-#include "scheduler.h"
-#include "memory.h"
+//#include "vCPU.h"
+//#include "scheduler.h"
+
 
 void run(void);
 
