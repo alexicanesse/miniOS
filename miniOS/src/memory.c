@@ -17,7 +17,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-
+#include <signal.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/types.h> //requiered for mmap
@@ -32,15 +33,27 @@
 #define MAX_PAGE_CLASS 1000000000
 #define MIN_NUMBER_OF_BLOCK_TO_ALLOC 10
 #define NUMBER_OF_PAGES_FOR_FREE_LIST 300
-#define CANARY ((char) 42)
 
 /*
  * the classes 0->MAX_CLASS_INDEX-1 will be used for allocation of size >= 2^i and < 2^(i+1)
  * The last class is used for all other allocations
  */
 mem_class_t *class_array = NULL;
+pthread_mutex_t mutex_clsarr = PTHREAD_MUTEX_INITIALIZER;
+long int  seed = 0;
 
+/*
+ * mutex over all function because if another thread tries to init the class, it needs to wait for it
+ * to be init
+ */
 int initclsarr(void){
+    pthread_mutex_lock(&mutex_clsarr);
+    if(class_array != NULL){
+        pthread_mutex_unlock(&mutex_clsarr);
+        return 0;
+    }
+
+    seed = random();
     size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
     
     void* address = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
@@ -54,12 +67,15 @@ int initclsarr(void){
          0,
          0);
     
-    if(address == MAP_FAILED)
+    if(address == MAP_FAILED){
+        pthread_mutex_unlock(&mutex_clsarr);
         return -1;
+    }
 
     /* set guard pages */
     if(mprotect(address, PAGESIZE, PROT_NONE) || mprotect(address + 2*PAGESIZE, PAGESIZE, PROT_NONE)){
         munmap(address, 3*PAGESIZE); /* sets errno if it fails */
+        pthread_mutex_unlock(&mutex_clsarr);
         return -1;
     }
 
@@ -74,6 +90,7 @@ int initclsarr(void){
         class_array[i].range.first = 0;
         class_array[i].range.second = 0;
     }
+    pthread_mutex_unlock(&mutex_clsarr);
     return 0;
 }
 
@@ -173,6 +190,22 @@ int delete_in_last_used_list(int cls_index, void* ptr){
     }
     pthread_mutex_unlock(&class_array[cls_index].mutex);
     return -1;
+}
+
+int block_alloced(void *ptr){
+    int cls_index = ptrtoclsindex(ptr);
+    pthread_mutex_lock(&class_array[cls_index].mutex);
+    used_t *it = class_array[cls_index].used;
+
+    while(it->next != NULL && (uint64_t) it->ptr != (uint64_t) ptr)
+        it = it->next;
+
+    if((uint64_t) it->ptr == (uint64_t) ptr){
+        pthread_mutex_unlock(&class_array[cls_index].mutex);
+        return 1;
+    }
+    pthread_mutex_unlock(&class_array[cls_index].mutex);
+    return 0;
 }
 
 int clsindex(size_t size){
@@ -283,7 +316,7 @@ void *cls_malloc(size_t size){
     insert_in_last_used_list(cls_index, block->ptr);
 
 #warning TODO HASH
-    block->ptr[block->size - 1] = CANARY; /* the size has been choosen to beat least size + 1 */
+    block->ptr[block->size - 1] = ptr_to_cannary(ptr); /* the size has been choosen to beat least size + 1 */
     return block->ptr;
 }
 
@@ -302,7 +335,12 @@ void* cls_realloc(void* ptr, size_t size){
     if(ptr == NULL)
         return cls_malloc(size);
     
-#warning TODO check canary
+    /* check that the block has indeed been alloced */
+    if(block_alloced(ptr) == 0){
+        fprintf(stderr, "malloc: *** error for object %p: pointer being realloc'd was not allocated\n", ptr);
+        kill(getpid(), SIGBUS);
+    }
+    
     if(size == 0){
         cls_free(ptr);
         return NULL;
@@ -322,6 +360,14 @@ void* cls_realloc(void* ptr, size_t size){
 #warning TODO
     }
     
+    size_t size_old = 2 << (cls_index_old - 1); /* fast 2^{i} */
+    size_t size_new = 2 << (cls_index_new - 1); /* fast 2^{i} */
+    
+    /* check if an overflow occured */
+    if(ptr_to_cannary(ptr) != ((byte *) ptr)[size_old - 1]){
+        fprintf(stderr, "realloc: *** error for object %p: an overflow occured\n", ptr);
+        kill(getpid(), SIGSEGV);
+    }
 
     /* if the two indexes are the same and the allocations are not big alloc, there is nothing to do */
     if(cls_index_new == cls_index_old)
@@ -333,8 +379,6 @@ void* cls_realloc(void* ptr, size_t size){
      * we free the old value
      */
     void *new_ptr = cls_malloc(size);
-    size_t size_old = 2 << (cls_index_old - 1); /* fast 2^{i} */
-    size_t size_new = 2 << (cls_index_new - 1); /* fast 2^{i} */
     
     /* Copy as much mem as possible */
     if(size_old < size_new)
@@ -350,23 +394,39 @@ void* cls_realloc(void* ptr, size_t size){
 void cls_free(void* ptr){
     int cls_index = ptrtoclsindex(ptr);
     
-    /* check if the block has indeed been allocated */
-    if(delete_in_last_used_list(cls_index, ptr) == -1)
-        fprintf(stderr, "malloc: *** error for object %p: pointer being freed was not allocated\n", ptr);
+    if(cls_index == MAX_CLASS_INDEX){
+        ;
+#warning TODO big alloc
+    }
     
-#warning TODO check CANNARY
+    /* check if the block has indeed been allocated */
+    if(delete_in_last_used_list(cls_index, ptr) == -1){
+        fprintf(stderr, "malloc: *** error for object %p: pointer being freed was not allocated\n", ptr);
+        kill(getpid(), SIGABRT);
+    }
+    
+    size_t size = 2 << (cls_index - 1);
+    
+    if(ptr_to_cannary(ptr) != ((byte *) ptr)[size - 1]){
+        fprintf(stderr, "buffer overflow occured at %p, exiting now\n", ptr);
+        exit(-1);
+    }
     
     pthread_mutex_lock(&class_array[cls_index].mutex);
-    insert_in_free_list(cls_index, ptr, 2 << (cls_index - 1));
+    insert_in_free_list(cls_index, ptr, size);
     pthread_mutex_unlock(&class_array[cls_index].mutex);
 }
 
 
+byte ptr_to_cannary(void* ptr){
+    size_t Value = (size_t) ptr;
 
-#warning error of cannary
-//if(*end != HashPointer(ptr)) {
-//    Error("buffer overflow occured at %p, exiting now\n", ptr);
-//    Error("%x\n", HashPointer(ptr));
-//    Error("[%p] %p %x %u %u\n", ptr, end, *end, Class[index].size, index);
-//    exit(-1);
-//}
+    Value = ~Value + (Value << 15);
+    Value ^= Value >> 12;
+    Value += Value << 2;
+    Value ^= Value >> 4;
+    Value *= seed;
+    Value ^= Value >> 16;
+
+    return (byte) Value;
+}

@@ -24,12 +24,13 @@
 #include <stdlib.h>
 
 int main(){
-    void *p = cls_malloc(10);
-    void *t = cls_malloc(10);
+    
+    void *p = malloc(10);
+    void *t = realloc(p+1, 101);
     printf("%p\n%p\n", p, t);
     
-    cls_free(p);
-    cls_free(p);
+    free(p);
+    free(p);
     return 0;
 }
 

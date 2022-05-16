@@ -12,6 +12,8 @@
 
 //https://vtechworks.lib.vt.edu/bitstream/handle/10919/96291/Liu_B_T_2020.pdf
 
+typedef uint8_t byte;
+
 struct mem_block_s{
     char *ptr;
     long int size;
@@ -51,7 +53,9 @@ int addfreespace(int cls_index);
 int clsindex(size_t size);
 int ptrtoclsindex(void *ptr);
 void insert_in_last_used_list(int cls_index, void* ptr);
-int delete_in_last_used_list(int cls_index, void* ptr); 
+int delete_in_last_used_list(int cls_index, void* ptr);
+byte ptr_to_cannary(void *ptr);
+int block_alloced(void *ptr);
 
 void* cls_malloc(size_t size);
 void* cls_realloc(void* ptr, size_t size);
