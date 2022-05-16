@@ -46,8 +46,11 @@ extern int yield(void);
  * Heap memory manager
  */
 extern void *hm_malloc(size_t size);
-extern void *cls_malloc(size_t size);
 extern void *hm_realloc(void* ptr, long int size);
 extern void hm_free(void *ptr);
+
+extern void* cls_malloc(size_t size);
+extern void* cls_realloc(void* ptr, size_t size);
+extern void cls_free(void* ptr);
 
 #endif /* miniOS_h */

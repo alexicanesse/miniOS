@@ -24,7 +24,12 @@
 #include <stdlib.h>
 
 int main(){
-
+    void *p = cls_malloc(10);
+    void *t = cls_malloc(10);
+    printf("%p\n%p\n", p, t);
+    
+    cls_free(p);
+    cls_free(p);
     return 0;
 }
 
