@@ -306,8 +306,29 @@ void *cls_malloc(size_t size){
     
     
     if(cls_index == MAX_CLASS_INDEX){
-        ;
-#warning TODO BIG ALLOC
+        size_t PAGESIZE = PAGESIZE_INITIALIZER;
+        
+        /* try to map enough memory */
+        void *ptr = mmap(
+            NULL,
+            PAGESIZE /* guard page */
+            + size
+            + PAGESIZE, /*guard page */
+            PROT_NONE,
+            MAP_SHARED | MAP_ANONYMOUS,
+            0,
+            0);
+        if(ptr == MAP_FAILED)
+            return NULL;
+        
+        /* try to mprotect the usable space */
+        if(mprotect(ptr + PAGESIZE, size, PROT_READ | PROT_WRITE) != 0){
+            munmap(ptr, 2*PAGESIZE + size);
+            return NULL;
+        }
+
+        insert_in_last_used_list(MAX_CLASS_INDEX, ptr, size);
+        return ptr;
     }
 
     
@@ -386,7 +407,7 @@ void* cls_realloc(void* ptr, size_t size){
         
         /* there is nothing to do if they both need the name number of pages */
         size_t PAGESIZE = PAGESIZE_INITIALIZER;
-        if((size_old & ~(PAGESIZE - 1)) == (size_new & ~(PAGESIZE - 1)))
+        if((size_old/PAGESIZE) == (size_new/PAGESIZE))
             return ptr;
     }
     
