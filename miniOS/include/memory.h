@@ -30,6 +30,7 @@ typedef struct pair_s pair_t;
 
 struct used_s{
     void *ptr; /* NULL indicates unused slot in list */
+    size_t size; 
     struct used_s *next;
 };
 typedef struct used_s used_t;
@@ -52,8 +53,9 @@ int initclass(int cls_index);
 int addfreespace(int cls_index);
 int clsindex(size_t size);
 int ptrtoclsindex(void *ptr);
-void insert_in_last_used_list(int cls_index, void* ptr);
+void insert_in_last_used_list(int cls_index, void* ptr, size_t size);
 int delete_in_last_used_list(int cls_index, void* ptr);
+size_t get_size(void* ptr, int cls_index);
 byte ptr_to_cannary(void *ptr);
 int block_alloced(void *ptr);
 

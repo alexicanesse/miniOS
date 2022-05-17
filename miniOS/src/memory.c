@@ -5,11 +5,6 @@
 //  Created on 15/04/2022.
 //
 
-/*
- * recommanded default value
- * must be a power of two to be fully respected
- */
-#define M_MMAP_THRESHOLD 128*1024
 
 
 //tells gcc that we do not want to know about deprecation.
@@ -33,6 +28,8 @@
 #define MAX_PAGE_CLASS 1000000000
 #define MIN_NUMBER_OF_BLOCK_TO_ALLOC 10
 #define NUMBER_OF_PAGES_FOR_FREE_LIST 300
+#define PAGESIZE_INITIALIZER sysconf(_SC_PAGE_SIZE)
+
 
 /*
  * the classes 0->MAX_CLASS_INDEX-1 will be used for allocation of size >= 2^i and < 2^(i+1)
@@ -54,7 +51,7 @@ int initclsarr(void){
     }
 
     seed = random();
-    size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
+    size_t PAGESIZE = PAGESIZE_INITIALIZER;
     
     void* address = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
                          address will be selected by the system so as not to overlap any existing
@@ -103,7 +100,7 @@ int initclass(int cls_index){
     if(class_array[cls_index].first_page_addr != NULL)
         return 0; /* already init */
     
-    size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
+    size_t PAGESIZE = PAGESIZE_INITIALIZER;
     
     void *addr = mmap(
          0x0, /* If addr is zero and MAP_FIXED is not specified, then an
@@ -158,7 +155,7 @@ int initclass(int cls_index){
     return 0;
 }
 
-void insert_in_last_used_list(int cls_index, void* ptr){
+void insert_in_last_used_list(int cls_index, void* ptr, size_t size){
     pthread_mutex_lock(&class_array[cls_index].mutex);
     used_t *it = class_array[cls_index].used;
     while(it->next != NULL && it->ptr != NULL)
@@ -170,7 +167,27 @@ void insert_in_last_used_list(int cls_index, void* ptr){
     if(it->ptr != NULL)
         it = it->next;
     it->ptr = ptr;
+    it->size = size;
     pthread_mutex_unlock(&class_array[cls_index].mutex);
+}
+
+size_t get_size(void* ptr, int cls_index){
+    if(cls_index != MAX_CLASS_INDEX)
+        return 2 << (cls_index - 1);
+    
+    /* look for the big block */
+    pthread_mutex_lock(&class_array[cls_index].mutex);
+    used_t *it = class_array[cls_index].used;
+
+    while(it->next != NULL && (uint64_t) it->ptr != (uint64_t) ptr)
+        it = it->next;
+
+    if((uint64_t) it->ptr == (uint64_t) ptr){
+        pthread_mutex_unlock(&class_array[cls_index].mutex);
+        return it->size;
+    }
+    pthread_mutex_unlock(&class_array[cls_index].mutex);
+    return 0;
 }
 
 /*
@@ -243,7 +260,7 @@ int addfreespace(int cls_index){
     if(cls_index == MAX_CLASS_INDEX)
         return -1;
     
-    size_t PAGESIZE = sysconf(_SC_PAGE_SIZE);
+    size_t PAGESIZE = PAGESIZE_INITIALIZER;
 
     /* we add enough pages to allocate at least MIN_NUMBER_OF_BLOCK_TO_ALLOC new blocks */
     int number_of_page_to_add = (int) (MIN_NUMBER_OF_BLOCK_TO_ALLOC * pow(2, cls_index) / PAGESIZE) + 1;
@@ -313,10 +330,9 @@ void *cls_malloc(size_t size){
     pthread_mutex_unlock(&class_array[cls_index].mutex);
     
     /* indicate the address as used to protect out selves from double free */
-    insert_in_last_used_list(cls_index, block->ptr);
+    insert_in_last_used_list(cls_index, block->ptr, block->size);
 
-#warning TODO HASH
-    block->ptr[block->size - 1] = ptr_to_cannary(ptr); /* the size has been choosen to beat least size + 1 */
+    block->ptr[block->size - 1] = ptr_to_cannary(block->ptr); /* the size has been choosen to beat least size + 1 */
     return block->ptr;
 }
 
@@ -393,28 +409,38 @@ void* cls_realloc(void* ptr, size_t size){
 
 void cls_free(void* ptr){
     int cls_index = ptrtoclsindex(ptr);
+    size_t size = get_size(ptr, cls_index);
     
     if(cls_index == MAX_CLASS_INDEX){
-        ;
-#warning TODO big alloc
+        if(size == 0){
+            fprintf(stderr, "malloc: *** error for object %p: pointer being freed was not allocated\n", ptr);
+            kill(getpid(), SIGABRT);
+        }
+        
+        size_t PAGESIZE = PAGESIZE_INITIALIZER;
+        if(munmap(ptr - PAGESIZE, size + 2*PAGESIZE) != -1){ /* +2*PAGESIZE takes into account the guard pages */
+            /* it failed */
+            /* errno is set */
+            /* we just surrender */
+            return;
+        }
     }
     
-    /* check if the block has indeed been allocated */
+    /* check if the block has indeed been allocated and remove it from used */
     if(delete_in_last_used_list(cls_index, ptr) == -1){
         fprintf(stderr, "malloc: *** error for object %p: pointer being freed was not allocated\n", ptr);
         kill(getpid(), SIGABRT);
     }
     
-    size_t size = 2 << (cls_index - 1);
-    
-    if(ptr_to_cannary(ptr) != ((byte *) ptr)[size - 1]){
-        fprintf(stderr, "buffer overflow occured at %p, exiting now\n", ptr);
-        exit(-1);
+    if(cls_index != MAX_CLASS_INDEX){
+        if(ptr_to_cannary(ptr) != ((byte *) ptr)[size - 1]){ /* big alloc are page guarded so cannaries are useless */
+            fprintf(stderr, "buffer overflow occured at %p, exiting now\n", ptr);
+            exit(-1);
+        }
+        pthread_mutex_lock(&class_array[cls_index].mutex);
+        insert_in_free_list(cls_index, ptr, size);
+        pthread_mutex_unlock(&class_array[cls_index].mutex);
     }
-    
-    pthread_mutex_lock(&class_array[cls_index].mutex);
-    insert_in_free_list(cls_index, ptr, size);
-    pthread_mutex_unlock(&class_array[cls_index].mutex);
 }
 
 

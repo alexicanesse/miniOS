@@ -25,8 +25,8 @@
 
 int main(){
     
-    void *p = malloc(10);
-    void *t = realloc(p+1, 101);
+    void *p = cls_malloc(10);
+    void *t = cls_realloc(p+1, 101);
     printf("%p\n%p\n", p, t);
     
     free(p);
