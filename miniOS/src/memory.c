@@ -364,30 +364,31 @@ void* cls_realloc(void* ptr, size_t size){
      
     /* looks for the index of the class it belongs to */
     int cls_index_old = ptrtoclsindex(ptr);
-    if(cls_index_old == MAX_CLASS_INDEX){
-        ;
-#warning TODO
-    }
-    
     /* calculate the index of the class the reallocate value will belongs to */
     int cls_index_new = clsindex(size);
-    if(cls_index_new == MAX_CLASS_INDEX){
-        ;
-#warning TODO
-    }
     
-    size_t size_old = 2 << (cls_index_old - 1); /* fast 2^{i} */
-    size_t size_new = 2 << (cls_index_new - 1); /* fast 2^{i} */
+
+    size_t size_old = get_size(ptr, cls_index_old);
+    size_t size_new = size;
+        
     
     /* check if an overflow occured */
-    if(ptr_to_cannary(ptr) != ((byte *) ptr)[size_old - 1]){
+    if(cls_index_old != MAX_CLASS_INDEX && ptr_to_cannary(ptr) != ((byte *) ptr)[size_old - 1]){
         fprintf(stderr, "realloc: *** error for object %p: an overflow occured\n", ptr);
         kill(getpid(), SIGSEGV);
     }
 
-    /* if the two indexes are the same and the allocations are not big alloc, there is nothing to do */
-    if(cls_index_new == cls_index_old)
-        return ptr;
+    /* handle cases where there is nothing to do */
+    if(cls_index_new == cls_index_old){
+        /* if the two indexes are the same and the allocations are not big alloc, there is nothing to do */
+        if(cls_index_new != MAX_CLASS_INDEX)
+            return ptr;
+        
+        /* there is nothing to do if they both need the name number of pages */
+        size_t PAGESIZE = PAGESIZE_INITIALIZER;
+        if((size_old & ~(PAGESIZE - 1)) == (size_new & ~(PAGESIZE - 1)))
+            return ptr;
+    }
     
     /*
      * we allocate a new space with malloc
