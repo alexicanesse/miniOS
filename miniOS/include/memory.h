@@ -9,6 +9,7 @@
 #define memory_h
 
 #include <stdio.h>
+#include <stdint.h> 
 
 //https://vtechworks.lib.vt.edu/bitstream/handle/10919/96291/Liu_B_T_2020.pdf
 

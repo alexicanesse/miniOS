@@ -21,6 +21,7 @@
 #include <string.h>
 #include <math.h>
 #include <errno.h>
+#include <stdint.h> 
 
 #include "memory.h"
 

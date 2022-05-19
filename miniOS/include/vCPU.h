@@ -44,7 +44,7 @@ typedef struct vCPU vCPU;
 void *init(void* param);
 void idle(void);
 void switch_process();
-void end_vCPU(int, struct __siginfo *, void *);
+void end_vCPU();
 
 
 
