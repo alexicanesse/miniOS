@@ -31,7 +31,6 @@
 pthread_mutex_t mutex_mem_list = PTHREAD_MUTEX_INITIALIZER; /* lock used to make some ressources thread-safe */
 pthread_mutex_t mutex_mem_list_secured = PTHREAD_MUTEX_INITIALIZER; /* lock used to make some ressources thread-safe */
 
-#warning NEED TO MOVE METADATA OF NOT SECURED BLOCKS
 mem_block *mem_list = NULL;
 mem_block *last_brk = NULL;
 
