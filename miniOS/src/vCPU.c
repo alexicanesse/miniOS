@@ -38,6 +38,7 @@ extern scheduler_type scheduler;
 /* __thread is a wrapper to make a globale variable thread specific */
 __thread ucontext_t *current_context = NULL; 
 __thread uThread *current_uThread = NULL;
+__thread int must_end = 0;
 
 int create_vCPU(int nbr_vCPU){
     while(nbr_vCPU--){ /* each loop creats one vCPU */
@@ -68,7 +69,12 @@ int create_vCPU(int nbr_vCPU){
     return 0;
 }
 
-#warning TODO wait for finish
+
+/*
+ * removes the vCPU from the list
+ * alerts the vCPU that it needs to be terminated
+ * join with the thread
+ */
 int destruct_vCPU(int nbr_vCPU){
     while(nbr_vCPU--){
         if(vCPUs == NULL) /* There isn't any vCPU left to delete */
@@ -78,7 +84,8 @@ int destruct_vCPU(int nbr_vCPU){
         vCPUs = vCPUs->next; /* the first vCPU is removed from the list */
         
         /* the thread is canceled */
-        pthread_cancel(*cpu_buffer->pthread);
+        pthread_kill(*cpu_buffer->pthread, SIGUSR2);
+        pthread_join(*cpu_buffer->pthread, NULL);
         /* free the memory */
         free(cpu_buffer->pthread);
         free(cpu_buffer);
@@ -182,6 +189,13 @@ void *init(void* param){ /* suspends until a signal is received */
     _sigact.sa_flags = SA_SIGINFO;
 
     sigaction(SIGUSR1, &_sigact, NULL);
+    
+    static struct sigaction _sigact2;
+    memset(&_sigact2, 0, sizeof(_sigact2));
+    _sigact2.sa_sigaction = end_vCPU;
+    _sigact2.sa_flags = SA_SIGINFO;
+
+    sigaction(SIGUSR2, &_sigact2, NULL);
 
     idle();
     return NULL;
@@ -200,6 +214,12 @@ void switch_process(int signum, siginfo_t *info, void *ptr){
     /* the thread is no longer running */
     if(current_uThread != NULL)
         current_uThread->running = 0;
+    
+    if(must_end == 1){ /* the vCPU is going to be canceled */
+        scheduler_add_thread(current_uThread);
+        pthread_cancel(pthread_self());
+        return; /* just in case */
+    }
 
     /* get the next thread to schedule */
     uThread *thread = next_to_schedule(current_uThread);
@@ -249,3 +269,6 @@ ucontext_t *uThread_cleaner(uThread *uthread){
     return context;
 }
 
+void end_vCPU(void){
+    
+}
