@@ -179,10 +179,10 @@ size_t get_size(void* ptr, int cls_index){
     pthread_mutex_lock(&class_array[cls_index].mutex);
     used_t *it = class_array[cls_index].used;
 
-    while(it->next != NULL && (uint64_t) it->ptr != (uint64_t) ptr)
+    while(it->next != NULL && it->next->ptr != NULL && (size_t) it->ptr != (size_t) ptr)
         it = it->next;
 
-    if((uint64_t) it->ptr == (uint64_t) ptr){
+    if((uint64_t) it->ptr == (size_t) ptr){
         pthread_mutex_unlock(&class_array[cls_index].mutex);
         return it->size;
     }
@@ -238,8 +238,8 @@ int clsindex(size_t size){
 int ptrtoclsindex(void *ptr){
     for(int i = 0; i < MAX_CLASS_INDEX; ++i){
         if(class_array[i].range.first != NULL
-           && ((uint64_t) class_array[i].range.first < (uint64_t) ptr
-           || (uint64_t) class_array[i].range.second >= (uint64_t) ptr)){ /* if ptr falls into the range */
+           && ((size_t) class_array[i].range.first < (size_t) ptr
+           && (size_t) class_array[i].range.second >= (size_t) ptr)){ /* if ptr falls into the range */
             return i;
         }
     }
@@ -327,8 +327,8 @@ void *cls_malloc(size_t size){
             return NULL;
         }
 
-        insert_in_last_used_list(MAX_CLASS_INDEX, ptr, size);
-        return ptr;
+        insert_in_last_used_list(MAX_CLASS_INDEX, ptr + PAGESIZE, size);
+        return ptr + PAGESIZE;
     }
 
     
@@ -417,6 +417,8 @@ void* cls_realloc(void* ptr, size_t size){
      * we free the old value
      */
     void *new_ptr = cls_malloc(size);
+    if(new_ptr == NULL)
+        return ptr;
     
     /* Copy as much mem as possible */
     if(size_old < size_new)

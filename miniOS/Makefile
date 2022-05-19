@@ -54,6 +54,26 @@ test_hm: $(OUT) ./test/test_hm/test_hm.o
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
 	
+test_hm_overflow: $(OUT) ./test/test_hm/test_hm_overflow.o
+	@echo "${BLUE}Linking C executable" $@ "${RESET}"
+	$(CC) -o ./test/test_hm/test_hm_overflow $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@echo "${PURPLE}Testing the heap memory manager overflow protection!\n${RESET}"
+	./test/test_hm/test_hm_overflow
+
+./test/test_hm/test_hm.o: ./test/test_hm/test_hm.c
+	@echo "${PURPLE}Building C object" $@ "${RESET}"
+	$(CC) $(CFLAGS) -o $@ -c $< -g
+	
+test_hm_guard_page: $(OUT) ./test/test_hm/test_hm_guard_page.o
+	@echo "${BLUE}Linking C executable" $@ "${RESET}"
+	$(CC) -o ./test/test_hm/test_hm_guard_page $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@echo "${PURPLE}Testing the heap memory manager guard pages!\n${RESET}"
+	./test/test_hm/test_hm_guard_page
+
+./test/test_hm/test_hm_guard_page.o: ./test/test_hm/test_hm_guard_page.c
+	@echo "${PURPLE}Building C object" $@ "${RESET}"
+	$(CC) $(CFLAGS) -o $@ -c $< -g
+	
 test_hm_legacy: $(OUT) ./test/test_hm_legacy/test_hm_legacy.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
 	$(CC) -o ./test/test_hm_legacy/test_hm_legacy $^ $(LDFLAGS) -L. -lminiOS -O2 -g

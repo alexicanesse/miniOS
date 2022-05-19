@@ -269,6 +269,6 @@ ucontext_t *uThread_cleaner(uThread *uthread){
     return context;
 }
 
-void end_vCPU(void){
-    
+void end_vCPU(int, struct __siginfo *, void *){
+    must_end = 1;
 }
