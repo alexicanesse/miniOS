@@ -14,6 +14,7 @@
 #include <ucontext.h>
 
 #include "vCPU.h"
+#include "miniOS.h"
 
 struct scheduler_type{
     int quantum;
@@ -21,7 +22,7 @@ struct scheduler_type{
 };
 typedef struct scheduler_type scheduler_type;
 
-enum scheduler_policies { RR, CFS };
+
 void config_scheduler(int quantum, enum scheduler_policies scheduler_policy);
 
 

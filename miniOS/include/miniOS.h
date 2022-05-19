@@ -21,7 +21,7 @@ void run(void);
 /*
  * scheduler
  */
-enum scheduler_policies;
+enum scheduler_policies { RR, CFS };
 extern void config_scheduler(int quantum, enum scheduler_policies scheduler_policy);
 
 
