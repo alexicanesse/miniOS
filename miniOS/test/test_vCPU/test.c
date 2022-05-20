@@ -37,7 +37,7 @@ void f_t3(void){ //thread 2
 
 int main(){
     printf("%d\n", create_vCPU(1));
-    config_scheduler(2, RR);
+    config_scheduler(2, CFS);
     run();
     printf("%d\n", create_uThread(&f_t2, 0, NULL));
     printf("%d\n", create_uThread(&f_t3, 0, NULL));
