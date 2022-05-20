@@ -22,6 +22,7 @@ struct uThread{
     unsigned long long stack_size;
     struct uThread *next; //used to make lists
     int running; //we cannot run the same uthread on two different vCPUs at the same time
+    size_t vTime;
 };
 typedef struct uThread uThread;
 
