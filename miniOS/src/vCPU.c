@@ -186,15 +186,17 @@ void *init(void* param){ /* suspends until a signal is received */
     static struct sigaction _sigact;
     memset(&_sigact, 0, sizeof(_sigact));
     _sigact.sa_sigaction = switch_process;
-    _sigact.sa_flags = SA_SIGINFO;
-
+    _sigact.sa_flags = SA_SIGINFO | SA_RESTART ;
+    sigfillset(&_sigact.sa_mask);
+    
     sigaction(SIGUSR1, &_sigact, NULL);
     
     static struct sigaction _sigact2;
     memset(&_sigact2, 0, sizeof(_sigact2));
     _sigact2.sa_sigaction = end_vCPU;
-    _sigact2.sa_flags = SA_SIGINFO;
-
+    _sigact2.sa_flags = SA_SIGINFO | SA_RESTART;
+    sigfillset(&_sigact2.sa_mask);
+    
     sigaction(SIGUSR2, &_sigact2, NULL);
 
     idle();

@@ -36,10 +36,10 @@ void run(void){
     static struct sigaction _sigact;
     memset(&_sigact, 0, sizeof(_sigact));
     _sigact.sa_sigaction = handle_alarm;
-    _sigact.sa_flags = SA_SIGINFO;
-
+    _sigact.sa_flags = SA_SIGINFO | SA_RESTART;
+    sigfillset(&_sigact.sa_mask);
+    
     sigaction(SIGALRM, &_sigact, NULL);
-//    idle(); //wait()
 }
 
 void handle_alarm(int signum, siginfo_t *info, void *ptr){
