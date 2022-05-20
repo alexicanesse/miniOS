@@ -65,7 +65,8 @@ uThread *next_to_schedule(uThread *thread) {
     } else{//else -> CFS
         if (thread != NULL) {
             thread->running = 0;
-            insert(thread, -1, tree); //TODO: -1 is a placeholder, use preemp_notifier to get the real value
+            thread->vTime += scheduler.quantum;
+            insert(thread, thread->vTime, tree);
         }
         return CFS_func();
     }
@@ -73,8 +74,12 @@ uThread *next_to_schedule(uThread *thread) {
 
 int scheduler_add_thread(uThread *thread) {//adds thread to the appropriate data structure
     if (policy) {//CFS
-        // New threads are inserted with a virtual time of zero (they have been running for 0 second)
-        tree = insert(thread, 0, tree);
+        // New threads are inserted with the minimal virtual time (just as if they were there from the beginning)
+        if (tree == NULL)
+            thread->vTime = 0;
+        else
+            thread->vTime = tree->leftmost->v_time;
+        tree = insert(thread, thread->vTime, tree);
         return 0;
     } else //RR
         return enqueue(thread);
