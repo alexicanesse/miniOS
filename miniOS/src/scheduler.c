@@ -66,7 +66,7 @@ uThread *next_to_schedule(uThread *thread) {
         if (thread != NULL) {
             thread->running = 0;
             thread->vTime += scheduler.quantum;
-            insert(thread, thread->vTime, tree);
+            tree = insert(thread, tree);
         }
         return CFS_func();
     }
@@ -78,8 +78,8 @@ int scheduler_add_thread(uThread *thread) {//adds thread to the appropriate data
         if (tree == NULL)
             thread->vTime = 0;
         else
-            thread->vTime = tree->leftmost->v_time;
-        tree = insert(thread, thread->vTime, tree);
+            thread->vTime = tree->leftmost->thread->vTime;
+        tree = insert(thread, tree);
         return 0;
     } else //RR
         return enqueue(thread);

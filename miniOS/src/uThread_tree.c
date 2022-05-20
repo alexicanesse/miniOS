@@ -21,12 +21,11 @@ uThread_tree *empty_tree(void) {
     tree->right = NULL;
     tree->leftmost = tree;
     tree->thread = NULL;
-    tree->v_time = 0;
 
     return tree;
 }
 
-uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree) {
+uThread_tree *insert(uThread *thread, uThread_tree *tree) {
     uThread_tree *node;
 
     if (!tree) { // If tree is empty, create one
@@ -35,8 +34,8 @@ uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree) {
         node->color = RED;
         node->v_time = v_time;
     } else {
-        if (v_time < tree->v_time) { // Find recursively where to insert
-            node = insert(thread, v_time, tree->left);
+        if (thread->vTime < tree->thread->vTime) { // find recursively where to insert
+            node = insert(thread, tree->left);
             if (!tree->left) { // If the node is to be inserted as a child
                 tree->left = node;
                 node->parent = tree;
@@ -45,7 +44,7 @@ uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree) {
                     recolor_on_insert(tree); // Re-equilibrate if both node and its parent are red
             }
         } else { // Symmetric
-            node = insert(thread, v_time, tree->right);
+            node = insert(thread, tree->right);
             if (!tree->right) {
                 tree->right = node;
                 node->parent = tree;
@@ -60,7 +59,8 @@ uThread_tree *insert(uThread *thread, long int v_time, uThread_tree *tree) {
 
 uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
     if (node->left != NULL && node->right != NULL) { // If node has 2 children, swap its value with one at the bottom
-        node->v_time = node->right->leftmost->v_time;
+        // printf("Recursing\n");
+        node->thread = node->right->leftmost->thread;
         return remove_node(node->right->leftmost, tree);
     } else {
         struct uThread_tree *new_node;
