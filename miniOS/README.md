@@ -4,6 +4,8 @@ Bienvenue dans le README du projet de Jean de Stainte Marie et Alexi Canesse. Ce
 
 ## Utilisation de la library
 
+Le seul header file de la library que l'utilisateurice devrait importer est `miniOS.h`. Le comportement en cas d'utilisation du fonction qui n'est pas présente dans ce header file est non définie.  
+
 Pour compiler un projet utilisant la library, pensez à include `miniOS.h` dans les fichiers utilisant des fonctions ou structures de données de la library et compilez avec l'option `-lminiOS` et l'option `-L/PATH_TO_THE_libminiOS.so_FILE`.
 
 
