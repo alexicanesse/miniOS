@@ -1,8 +1,10 @@
 #  MiniOS
 
+Bienvenue dans le README du projet de Jean de Stainte Marie et Alexi Canesse. Ce projet inclue l'intégralité du contenue demandé. Quelques libertées ont étées prisent avec votre accord concernant le heap memory manager afin d'obtenir un heap memory manager qui nous semble meilleur.  
+
 ## Utilisation de la library
 
-Pour compiler un projet utilisant la library, pensez à include `minoOS.h` dans les fichiers utilisant des fonctions ou structures de données de la library et compilez avec l'option `-lminiOS` et l'option `-L/PATH_TO_THE_libminiOS.so_FILE`.
+Pour compiler un projet utilisant la library, pensez à include `miniOS.h` dans les fichiers utilisant des fonctions ou structures de données de la library et compilez avec l'option `-lminiOS` et l'option `-L/PATH_TO_THE_libminiOS.so_FILE`.
 
 
 Executez la ligne suivante avant de lancer votre fichier compilé.
@@ -70,6 +72,12 @@ void hm_free(void *ptr);
 
 ## Fonctionnement 
 
+### vCPU et scheduler 
+
+Les vCPU sont des threads et les uThreads sont des contexts. Tous les quantums de temps, le thread principale, celui de l'utilisateurice, recoit un `SIGALRM. Lors de la reception de ce signal, le thread envoie un `SIGUSR1`a tous les vCPUs. Iceux executent alors les fonctions du scheduler pour re_scheduler la tache qui était en cours et pour savoir quoi scheduler ensuite. Si rien n'est schedulable, le vCPU idle jusqu'à la fin du quantum.  
+
+L'implémentation a fait en sorte de prendre en compte l'ajout de nouveaux uThreads après le lancement des vCPUs, la créations de nouveaux vCPUs plus-tard, la suppressions de vCPUS durant le fonctionnement et le fait que les taches peuvent terminer. Quand une tache termine, une nouvelle est immédiatement schédulée.
+
 ### Heap memory manager 
 
 Deux implémentations sont proposées. memory_legacy.c contient l'implémentation initiale réalisée. Il s'agit de l'implémentation correspondant à ce que le TP demande. `hm_malloc` et `hm_malloc` sont les versions non sécurisées. `hm_free` est l'implémentation de free. Ce heap manager est testé et des tests sont disponibles. Néanmoins, nous ne fournissons aucune garantie sur le fonctionnement de cette implémentation et nous ne considérons pas qu'elle fait parti de notre projet.
@@ -89,9 +97,11 @@ Chaque classe possède une _free list_ contenant une liste d'espaces allouables.
 Lors d'un appel à `cls_malloc`, si l'indice correspondant à la taille alloué est strictement plus petit que `MAX_CLASS_INDEX`, la fonction renvoie le premier espace libre disponible et le marque comme utilisé. Si aucun espace est disponible, on alloue assez de pages pour contenir `MIN_NUMBER_OF_BLOCK_TO_ALLOC` espaces mémoires dans la zone dédiée à cette classe. On protège évidement cette zone par des _guard pages_.   
 Lors d'un appel à `cls_malloc`pour une plus grosse zone mémoire, on mmap suffisement de pages en protegeant la zone par une _guard page_ avant et après la zone allouée. 
 
-__Fonctionnement de `cls_realloc`.__ Cette fonction ne fait rien si la zone à reallouer est déjà de la bonne taille et fait des appels à `cls_malloc`et `cls_free` suivit d'un appel à `memcpy` sinon. Cette fonction vérifie aussi le cannaries lorsque cela a un sens.   
+__Fonctionnement de `cls_realloc`.__ Si le pointeur donné en entré est `NULL`, cette fonction se comporte comme `cls_malloc`. Sinon, on vérifie que le pointeur a bien été alloué. Cette fonction ne fait rien si la zone à reallouer est déjà de la bonne taille et fait des appels à `cls_malloc`et `cls_free` suivit d'un appel à `memcpy` sinon. Cette fonction vérifie aussi le cannaries lorsque cela a un sens.   
 
 __Fonctionnement de `cls_free`.__ Cette fonctione vérifie que le pointeur donné en argument est a bien été alloué (protection contre les _double free_ attaque) et vérifie le cannaries si cela est nécessaire.   
+
+La vérification des allocations se fait à l'aide d'une _used_list_. Icelle est palcé au début des pages allouées à la _free list_ associées et croit vers le haut. Ceci a été décidé afin de réduire la consommation en mémoire de la library.
 
 
 
