@@ -27,7 +27,6 @@ uThread_tree *empty_tree(void) {
 
 uThread_tree *insert(uThread *thread, uThread_tree *tree) {
     uThread_tree *node;
-    // printf("Tree %p, Tree parent 1 %p\n", tree, !tree ? NULL : tree->parent);
 
     if (!tree) { // If tree is empty, create one
         node = empty_tree();
@@ -41,7 +40,7 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
                 node->parent = tree;
                 tree->leftmost = node->leftmost;
                 if (tree->color == RED)
-                    tree = recolor_on_insert(tree); // Re-equilibrate if both node and its parent are red
+                    recolor_on_insert(tree); // Re-equilibrate if both node and its parent are red
             }
         } else { // Symmetric
             node = insert(thread, tree->right);
@@ -49,23 +48,16 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
                 tree->right = node;
                 node->parent = tree;
                 if (tree->color == RED)
-                    tree = recolor_on_insert(tree);
+                    recolor_on_insert(tree);
             }
         }
     }
 
-    // printf("Tree %p, Tree parent 2 %p\n", !tree ? node : tree, !tree ? NULL : tree->parent);
     return get_root(node);
-    if (!tree)
-        return node;
-    else
-        return tree;
 }
 
 uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
-    // printf("Node %p removed in tree %p\n", node, tree);
     if (node->left != NULL && node->right != NULL) { // If node has 2 children, swap its value with one at the bottom
-        // printf("Recurring\n");
         node->thread = node->right->leftmost->thread;
         return remove_node(node->right->leftmost, tree);
     } else {
@@ -94,7 +86,6 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
             tree = new_node;
         free(node);
 
-        // printf("Tree: %p\n", tree);
         if (!tree)
             return tree;
 
