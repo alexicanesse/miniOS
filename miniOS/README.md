@@ -4,7 +4,7 @@
 
 ### Compilation et utilisation de la library
 
-### Testes
+## Testes
 
 Le projet comporte plusieurs tests. Les tests représentent de simples exemples de bon fonctionnement: le code y est moins propre. Les commentaires permettent toute fois de comprendre le comportement attendue.  
 
@@ -35,9 +35,25 @@ make test_hm_guard_page
 make test_hm_overflow
 ```
 
-### Liste des fonctions disponibles 
+## Liste des fonctions disponibles 
 
+```C
+void run(void);
+void config_scheduler(int quantum, enum scheduler_policies scheduler_policy);
+int create_vCPU(int nbr_vCPU); /* returns 0 unless it fails. errno is set if it fails */
+int destruct_vCPU(int nbr_vCPU); /* returns 0 unless it fails. errno is set if it fails */
+int create_uThread(void (*func)(void), int argc, const char * argv[]); /* returns 0 unless it fails. errno is set if it fails */
+void destruct_current_uThread(uThread* thread);
+int yield(void);
+void* cls_malloc(size_t size);
+void* cls_realloc(void* ptr, size_t size);
+void cls_free(void* ptr);
 
+/* left for legacy */
+void *hm_malloc(size_t size);
+void *hm_realloc(void* ptr, long int size);
+void hm_free(void *ptr);
+```
 
 ## Fonctionnement 
 
