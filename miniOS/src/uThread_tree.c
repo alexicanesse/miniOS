@@ -36,7 +36,7 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
     } else {
         if (thread->vTime < tree->thread->vTime) { // find recursively where to insert
             node = insert(thread, tree->left);
-            if (!tree->left) { // If the node is to be inserted as a child
+            if (node->thread == thread) { // If the node is to be inserted as a child
                 tree->left = node;
                 node->parent = tree;
                 tree->leftmost = node->leftmost;
@@ -45,7 +45,7 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
             }
         } else { // Symmetric
             node = insert(thread, tree->right);
-            if (!tree->right) {
+            if (node->thread == thread) {
                 tree->right = node;
                 node->parent = tree;
                 if (tree->color == RED)
@@ -55,6 +55,7 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
     }
 
     // printf("Tree %p, Tree parent 2 %p\n", !tree ? node : tree, !tree ? NULL : tree->parent);
+    return get_root(node);
     if (!tree)
         return node;
     else
@@ -64,7 +65,7 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
 uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
     // printf("Node %p removed in tree %p\n", node, tree);
     if (node->left != NULL && node->right != NULL) { // If node has 2 children, swap its value with one at the bottom
-        // printf("Recursing\n");
+        // printf("Recurring\n");
         node->thread = node->right->leftmost->thread;
         return remove_node(node->right->leftmost, tree);
     } else {
@@ -110,7 +111,7 @@ uThread_tree * recolor_on_insert(uThread_tree *tree) {
         tree->color = BLACK;
     else {
         if (get_color(tree->parent->left) == RED &&
-            get_color(tree->parent->right) == RED) { // If both childs are red, simple
+            get_color(tree->parent->right) == RED) { // If both children are red, simple
             if (tree->parent->left != NULL)
                 tree->parent->left->color = BLACK;
             if (tree->parent->right != NULL)
