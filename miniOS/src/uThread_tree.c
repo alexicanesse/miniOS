@@ -53,6 +53,9 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
         }
     }
 
+    if (tree != NULL)
+        tree->leftmost = !tree->left ? tree : tree->left->leftmost;
+
     return get_root(node);
 }
 
