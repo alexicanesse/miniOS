@@ -2,7 +2,20 @@
 
 ## Utilisation de la library
 
-### Compilation et utilisation de la library
+Pour compiler un projet utilisant la library, pensez à include `minoOS.h` dans les fichiers utilisant des fonctions ou structures de données de la library et compilez avec l'option `-lminiOS` et l'option `-L/PATH_TO_THE_libminiOS.so_FILE`.
+
+
+Executez la ligne suivante avant de lancer votre fichier compilé.
+```sh
+export LD_LIBRARY_PATH=/PATH_TO_THE_libminiOS.so_FILE 
+```
+
+## Compilation
+
+Pour compiler la library, placez-vous à la racine du projet, dans le même dossier que le MakeFile et executez
+```sh
+make
+```
 
 ## Testes
 
