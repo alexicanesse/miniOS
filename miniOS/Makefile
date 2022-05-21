@@ -1,5 +1,3 @@
-#https://www.cs.swarthmore.edu/~newhall/unixhelp/howto_C_libraries.html
-
 #define colors for nice output
 ifneq (,$(findstring xterm,${TERM}))
 	RED          := $(shell tput -Txterm setaf 1)

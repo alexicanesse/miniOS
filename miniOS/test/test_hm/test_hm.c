@@ -63,7 +63,7 @@ int main(){
     p = cls_realloc(p, 100);
     for(int i = 0; i < 10; i++)
         if(p[i] != 'a')
-//            printf("\033[0;31mRealloc fails.!\033[0m\n");
+            printf("\033[0;31mRealloc fails.!\033[0m\n");
     for(int i = 0; i < 100; i++)
         p[i] = 'b';
     for(int i = 0; i < 100; i++)
