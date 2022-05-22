@@ -35,7 +35,8 @@ extern void free(void* ptr);
 
 typedef void (* ucfunc_t)(void);
 
-
+extern pthread_mutex_t mutex_vCPUs;
+__thread int must_end = 0; /* this variable is used to be able to wait for the quantum to end before deleting a vCPU */
 ucontext_t *uThread_cleaner(uThread *uthread);
 
 vCPU *vCPUs = NULL; /* list of all running vCPUs */
@@ -45,7 +46,6 @@ extern scheduler_type scheduler;
 /* __thread is a wrapper to make a globale variable thread specific */
 __thread ucontext_t *current_context = NULL; 
 __thread uThread *current_uThread = NULL;
-__thread int must_end = 0; /* this variable is used to be able to wait for the quantum to end before deleting a vCPU */
 
 int create_vCPU(int nbr_vCPU){
     while(nbr_vCPU--){ /* each loop creats one vCPU */
@@ -83,20 +83,24 @@ int create_vCPU(int nbr_vCPU){
  * join with the thread
  */
 int destruct_vCPU(int nbr_vCPU){
+    pthread_mutex_lock(&mutex_vCPUs);
     while(nbr_vCPU--){
-        if(vCPUs == NULL) /* There isn't any vCPU left to delete */
+        if(vCPUs == NULL){ /* There isn't any vCPU left to delete */
+            pthread_mutex_unlock(&mutex_vCPUs);
             return -1; /* we were not able to delete enough vCPUs */
+        }
 
         vCPU *cpu_buffer = vCPUs;
         vCPUs = vCPUs->next; /* the first vCPU is removed from the list */
         
         /* the thread is canceled */
         pthread_kill(*cpu_buffer->pthread, SIGUSR2);
-        pthread_join(*cpu_buffer->pthread, NULL);
+        
         /* free the memory */
         free(cpu_buffer->pthread);
         free(cpu_buffer);
     }
+    pthread_mutex_unlock(&mutex_vCPUs);
     return 0;
 }
 
@@ -200,7 +204,7 @@ void *init(void* param){ /* suspends until a signal is received */
     
     static struct sigaction _sigact2;
     memset(&_sigact2, 0, sizeof(_sigact2));
-    _sigact2.sa_sigaction = end_vCPU;
+    _sigact2.sa_sigaction = switch_process;
     _sigact2.sa_flags = SA_SIGINFO;
     sigfillset(&_sigact2.sa_mask);
     
@@ -221,30 +225,30 @@ void idle(void){
 
 void switch_process(int signum, siginfo_t *info, void *ptr){
     /* the thread is no longer running */
-    if(current_uThread != NULL)
-        current_uThread->running = 0;
-    
-    if(must_end == 1){ /* the vCPU is going to be canceled */
-        scheduler_add_thread(current_uThread);
-        pthread_cancel(pthread_self());
-        return; /* just in case */
-    }
+      if(current_uThread != NULL)
+          current_uThread->running = 0;
+      
+      if(must_end == 1){ /* the vCPU is going to be canceled */
+          scheduler_add_thread(current_uThread);
+          pthread_cancel(pthread_self());
+          return; /* just in case */
+      }
 
-    /* get the next thread to schedule */
-    uThread *thread = next_to_schedule(current_uThread);
-    current_uThread = thread;
-    
-    if(thread == NULL)
-        idle(); /* if there is nothing to schedule, put the thread in idle */
-    else{
-        thread->running = 1;
-        ucontext_t *past_context = current_context;
-        current_context = thread->context;
-        if(past_context == NULL)
-            setcontext(current_context);
-        else
-            swapcontext(past_context, current_context);
-    }
+      /* get the next thread to schedule */
+      uThread *thread = next_to_schedule(current_uThread);
+      current_uThread = thread;
+      
+      if(thread == NULL)
+          idle(); /* if there is nothing to schedule, put the thread in idle */
+      else{
+          thread->running = 1;
+          ucontext_t *past_context = current_context;
+          current_context = thread->context;
+          if(past_context == NULL)
+              setcontext(current_context);
+          else
+              swapcontext(past_context, current_context);
+      }
 }
 
 ucontext_t *uThread_cleaner(uThread *uthread){
@@ -277,6 +281,7 @@ ucontext_t *uThread_cleaner(uThread *uthread){
 
     return context;
 }
+
 
 void end_vCPU(int i, struct __siginfo * info, void * ptr){
     must_end = 1;

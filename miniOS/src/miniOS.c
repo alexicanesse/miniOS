@@ -28,6 +28,10 @@ void free(void* ptr){
 }
 #endif
 
+
+pthread_mutex_t mutex_vCPUs = PTHREAD_MUTEX_INITIALIZER;
+
+
 extern scheduler_type scheduler;
 extern vCPU *vCPUs;
 
@@ -57,9 +61,11 @@ void run(void){
 }
 
 void handle_alarm(int signum, siginfo_t *info, void *ptr){
+    pthread_mutex_lock(&mutex_vCPUs);
     vCPU *cpu = vCPUs;
     while(cpu != NULL){
         pthread_kill(*cpu->pthread, SIGUSR1); //It tells them to switch to the next uThread.
         cpu = cpu->next;
     }
+    pthread_mutex_unlock(&mutex_vCPUs);
 }
