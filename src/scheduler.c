@@ -96,6 +96,8 @@ int scheduler_add_thread(uThread *thread) {/* adds thread to the appropriate dat
             thread->vTime = tree->leftmost->thread->vTime;
         pthread_mutex_lock(&mutex);
         tree = insert(thread, tree);
+        if (!tree->left && !tree->right)
+            tree->color = BLACK;
         pthread_mutex_unlock(&mutex);
         return 0;
     }
