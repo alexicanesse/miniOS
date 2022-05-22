@@ -43,4 +43,8 @@ enum color get_color(uThread_tree *node);
 
 int update_leftmost(uThread_tree *node);
 
+int check_rb(uThread_tree *tree);
+
+int print_tree(uThread_tree *tree);
+
 #endif /* uThread_tree_h */

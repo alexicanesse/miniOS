@@ -74,11 +74,11 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
 
         // Update potential child parent and select it as the node that will replace the one to be removed
         if (node->left != NULL) {
-            node->left->parent = node->parent;
             new_node = node->left;
+            new_node->parent = node->parent;
         } else if (node->right != NULL) {
-            node->right->parent = node->parent;
             new_node = node->right;
+            new_node->parent = node->parent;
         } else
             new_node = NULL;
         if (node->parent != NULL) { // If node has parents, update their children (+pointer to leftmost)
@@ -122,7 +122,7 @@ int recolor_on_insert(uThread_tree *tree) {
             if (get_color(tree->parent->parent) == RED)
                 recolor_on_insert(tree->parent->parent);
         } else {
-            /* Here brother is necessarily black
+            /* Here sibling is necessarily black
              * If the node is not the child of the same side of its parent as its problematic child,
              * rotate to change that:
              *
@@ -167,7 +167,7 @@ int recolor_on_removal(uThread_tree *node, uThread_tree *parent) {
         if (node != NULL)
             node->color = BLACK;
     } else {
-        /* We go back to the case where sibling is black (*node in uppercase):
+        /* We want to go back to the case where sibling is black (*node in uppercase):
          * If sibling is red, parent is black, we just do a rotation
          *
          *      b             r            b
@@ -194,7 +194,7 @@ int recolor_on_removal(uThread_tree *node, uThread_tree *parent) {
                 parent->right->color = RED;
                 recolor_on_removal(parent, parent->parent);
             } else {
-                /* We go back to the case where right child of sibling is red
+                /* We want to go back to the case where right child of sibling is red
                  * If left children of brother is red and right is black, with a rotation the left becomes red
                  *
                  *        parent      parent        parent
@@ -368,5 +368,27 @@ int update_leftmost(uThread_tree *node) {
             update_leftmost(node->parent);
     }
 
+    return 0;
+}
+
+int check_rb(uThread_tree *tree) {
+    if (!tree)
+        return 1;
+    else {
+        int rb = check_rb(tree->left);
+        if (rb >= 0 && rb == check_rb(tree->right))
+            return tree->color == RED ? rb : rb + 1;
+        else
+            return -1;
+    }
+}
+
+int print_tree(uThread_tree *tree) {
+    printf("%p: {color = %s, parent = %p, left = %p, right = %p, leftmost = %p}\n", tree,
+           tree->color == RED ? "RED" : "BLACK", tree->parent, tree->left, tree->right, tree->leftmost);
+    if (tree->left != NULL)
+        print_tree(tree->left);
+    if (tree->right != NULL)
+        print_tree(tree->right);
     return 0;
 }
