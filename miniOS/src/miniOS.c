@@ -14,6 +14,20 @@
 #include "vCPU.h"
 #include "scheduler.h"
 
+#ifdef WITH_OWN_HMM
+void* malloc(size_t size){
+    return cls_malloc(size);
+}
+
+void* realloc(void* ptr, size_t size){
+    return cls_realloc(ptr, size);
+}
+
+void free(void* ptr){
+    cls_free(ptr);
+}
+#endif
+
 extern scheduler_type scheduler;
 extern vCPU *vCPUs;
 

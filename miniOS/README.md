@@ -1,6 +1,6 @@
 #  MiniOS
 
-Bienvenue dans le README du projet de Jean de Stainte Marie et Alexi Canesse. Ce projet inclue l'intégralité du contenue demandé. Quelques libertées ont étées prisent avec votre accord concernant le heap memory manager afin d'obtenir un heap memory manager qui nous semble meilleur.  
+Bienvenue dans le README du projet de Jean de Sainte Marie et Alexi Canesse. Ce projet inclue l'intégralité du contenue demandé. Quelques libertées ont étées prisent avec votre accord concernant le heap memory manager afin d'obtenir un heap memory manager qui nous semble meilleur.  
 
 ## Utilisation de la library
 
@@ -19,6 +19,11 @@ export LD_LIBRARY_PATH=/PATH_TO_THE_libminiOS.so_FILE
 Pour compiler la library, placez-vous à la racine du projet, dans le même dossier que le MakeFile et executez
 ```sh
 make
+```
+
+Il est possible de compiler la library de manière à ce que tous les appels à `malloc`, `realloc` et `free` utilisent notre propre HMM. Il suffit de compiler de cette manière:
+```sh
+make WITH_OWN_HMM=1
 ```
 
 ## Testes
@@ -50,6 +55,11 @@ make test_hm_guard_page
 
 #Pour tester les cannaries
 make test_hm_overflow
+```
+
+Il est possible de compiler la library de manière à ce que tous les appels à `malloc`, `realloc` et `free` utilisent notre propre HMM. Utiliser les tests des vCPUs avec notre propre HMM est un test ultime qui fonctionne! Pour essayer, executez
+```sh
+make test_hm_RR WITH_OWN_HMM=1
 ```
 
 ## Liste des fonctions disponibles 

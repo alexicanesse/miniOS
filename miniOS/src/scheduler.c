@@ -10,6 +10,13 @@
 #include "vCPU.h"
 #include "uThread_queue.h"
 #include "uThread_tree.h"
+#include "miniOS.h"
+
+#ifdef WITH_OWN_HMM
+extern void* malloc(size_t size);
+extern void* realloc(void* ptr, size_t size);
+extern void free(void* ptr);
+#endif
 
 uThread_queue *queue;
 uThread_tree *tree;
