@@ -5,6 +5,7 @@
 //  Created on 15/04/2022.
 //
 #include <stdlib.h>
+#include <time.h>
 
 #include "scheduler.h"
 #include "vCPU.h"
@@ -23,6 +24,7 @@ uThread_tree *tree;
 
 enum scheduler_policies policy = RR;
 scheduler_type scheduler;
+__thread struct timespec timestamp;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; //lock use to make some ressources thread-safe
 
@@ -60,6 +62,7 @@ uThread *CFS_func(void) {
     uThread *thread = tree->leftmost->thread; //get the leftmost thread
     tree = remove_node(tree->leftmost, tree); //then remove it from the tree
     pthread_mutex_unlock(&mutex);
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &timestamp);
     return thread;
 }
 
@@ -73,8 +76,10 @@ uThread *next_to_schedule(uThread *thread) {
         return RR_func();
     } else{//else -> CFS
         if (thread != NULL) {
+            struct timespec ts_out;
+            clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts_out);
             thread->running = 0;
-            thread->vTime += scheduler.quantum;
+            thread->vTime += ts_out.tv_nsec - timestamp.tv_nsec;
             pthread_mutex_lock(&mutex);
             tree = insert(thread, tree);
             pthread_mutex_unlock(&mutex);
