@@ -45,7 +45,7 @@ extern scheduler_type scheduler;
 /* __thread is a wrapper to make a globale variable thread specific */
 __thread ucontext_t *current_context = NULL; 
 __thread uThread *current_uThread = NULL;
-__thread int must_end = 0;
+__thread int must_end = 0; /* this variable is used to be able to wait for the quantum to end before deleting a vCPU */
 
 int create_vCPU(int nbr_vCPU){
     while(nbr_vCPU--){ /* each loop creats one vCPU */
@@ -278,6 +278,6 @@ ucontext_t *uThread_cleaner(uThread *uthread){
     return context;
 }
 
-void end_vCPU(int, struct __siginfo *, void *){
+void end_vCPU(int i, struct __siginfo * info, void * ptr){
     must_end = 1;
 }
