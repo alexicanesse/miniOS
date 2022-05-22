@@ -22,15 +22,18 @@ extern pthread_mutex_t mutex;
 
 int enqueue(uThread *thread){
     queue_element *element = (queue_element *) malloc(sizeof(queue_element));
-    if(element == NULL) //if malloc failed
-        return -1; //errno is already set by malloc
-    //init element
+    if(element == NULL) /* if malloc failed */
+        return -1; /* errno is already set by malloc */
+    
+    /* init element */
     element->element = thread;
     element->next = NULL;
-    //add element to the queue at the end
-    pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
+    
+    /* add element to the queue at the end */
+    pthread_mutex_lock(&mutex); /* other threads are not able to acces protects ressources utile we release the lock */
     if(queue == NULL)
         queue = empty_queue();
+    
     if(queue->first == NULL)
         queue->first = element;
     else
@@ -42,17 +45,15 @@ int enqueue(uThread *thread){
 }
 
 uThread *dequeue(void){
-    uThread *thread = queue->first->element; //next thread
+    uThread *thread = queue->first->element; /* next thread */
 
-    pthread_mutex_lock(&mutex); //other threads are not able to acces protects ressources utile we release the lock
-    if(queue->first == queue->last){//there is only one node
+    pthread_mutex_lock(&mutex); /* other threads are not able to acces protects ressources utile we release the lock */
+    if(queue->first == queue->last){ /* there is only one node */
         queue->first = NULL;
         queue->last = NULL;
     }
     else
         queue->first = queue->first->next;
-    //we realease the memory
-//    free(buffer);
     pthread_mutex_unlock(&mutex);
 
     
