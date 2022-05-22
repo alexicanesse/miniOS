@@ -58,17 +58,10 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
     }
 
     // Two possibilities, either node is already the root or it is the one we just inserted
-    printf("--------------------\n");
-    print_tree(get_root(node));
-    if (check_rb(get_root(node)) < 0)
-        printf("%p", get_root(node)->parent->parent);
-
     return get_root(node);
 }
 
 uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
-    if (check_rb(get_root(tree)) < 0)
-        printf("%p", get_root(tree)->parent->parent);
     // If node has 2 children, swap its value with one at the bottom
     // (should not happen as we only remove leftmost nodes)
     if (node->left != NULL && node->right != NULL) {
@@ -101,9 +94,6 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
             recolor_on_removal(new_node, node->parent);
 
         free(node);
-
-        if (check_rb(get_root(tree)) < 0)
-            printf("%p", get_root(tree)->parent->parent);
 
         return !tree ? tree : get_root(tree);
     }
