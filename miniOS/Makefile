@@ -12,7 +12,6 @@ else
 endif
 
 
-
 OUT=libminiOS.so
 CFLAGS=-Wall -fPIC -I./include
 #CFLAGS=-Wall -D_POSIX_C_SOURCE=199309L -fPIC
@@ -23,6 +22,11 @@ FILES = scheduler vCPU memory memory_legacy uThread_tree uThread_queue miniOS
 CFILES = $(addsuffix .c, $(addprefix ./src/, $(FILES)))
 OFILES = $(addsuffix .o, $(addprefix ./objects/, $(FILES)))
 DIRECTORIES = ./objects
+
+
+ifdef WITH_OWN_HMM
+CFLAGS += -DWITH_OWN_HMM
+endif
 
 $(DIRECTORIES) :
 	@echo "${PURPLE}Creating missing directory" $@ "${RESET}"

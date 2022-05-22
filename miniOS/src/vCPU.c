@@ -25,6 +25,13 @@
 
 #include "vCPU.h"
 #include "scheduler.h"
+#include "miniOS.h"
+
+#ifdef WITH_OWN_HMM
+extern void* malloc(size_t size);
+extern void* realloc(void* ptr, size_t size);
+extern void free(void* ptr);
+#endif
 
 typedef void (* ucfunc_t)(void);
 
