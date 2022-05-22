@@ -38,7 +38,6 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
             if (node->thread == thread) { // If the node is to be inserted as a child
                 tree->left = node;
                 node->parent = tree;
-                tree->leftmost = node->leftmost;
                 if (tree->color == RED)
                     recolor_on_insert(tree); // Re-equilibrate if both node and its parent are red
             }
@@ -54,7 +53,7 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
     }
 
     if (tree != NULL)
-        tree->leftmost = !tree->left ? tree : tree->left->leftmost;
+        update_leftmost(tree);
 
     return get_root(node);
 }
@@ -81,26 +80,22 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
                 node->parent->left = new_node;
             else
                 node->parent->right = new_node;
-            if (!node->parent->left)
-                node->parent->leftmost = node->parent;
-            else
-                node->parent->leftmost = node->parent->left->leftmost;
+            update_leftmost(node->parent);
         } else
             tree = new_node;
+        if (color == BLACK && node->parent != NULL) { // If node was black, tree has to be re-equilibrated
+            tree = recolor_on_removal(node->parent);
+        }
         free(node);
 
         if (!tree)
             return tree;
 
-        if (color == BLACK) { // If node was black, tree has to be re-equilibrated
-            tree = recolor_on_removal(new_node);
-        }
-
         return tree;
     }
 }
 
-uThread_tree * recolor_on_insert(uThread_tree *tree) {
+uThread_tree *recolor_on_insert(uThread_tree *tree) {
     if (!tree->parent) // Root of tree can become black without further questions
         tree->color = BLACK;
     else {
@@ -134,31 +129,29 @@ uThread_tree * recolor_on_insert(uThread_tree *tree) {
     return tree;
 }
 
-uThread_tree * recolor_on_removal(uThread_tree *tree) {
+uThread_tree *recolor_on_removal(uThread_tree *tree) {
     if (get_color(tree) == RED || !tree->parent) // Father of the removed node become black if it was red / is the root
         tree->color = BLACK;
     else {
         // If brother is red, its children are black, using a rotation it becomes black
-        if (tree->parent->left->color == RED) {
+        if (get_color(tree->parent->left) == RED) {
             rotate_right(tree->parent);
             tree->parent->color = RED;
             tree->parent->parent->color = BLACK;
         }
-        if (tree->parent->right->color == RED) {
+        if (get_color(tree->parent->right) == RED) {
             rotate_left(tree->parent);
             tree->parent->color = RED;
             tree->parent->parent->color = BLACK;
         }
         if (tree->parent->left == tree) {
             // Both children of brother are black -> it becomes red and the problem goes up to the parent
-            if ((tree->parent->right->left == NULL || tree->parent->right->left->color == BLACK) &&
-                (tree->parent->right->right == NULL || tree->parent->right->right->color == BLACK)) {
+            if (get_color(tree->parent->right->left) == BLACK && get_color(tree->parent->right->right) == BLACK) {
                 tree->parent->right->color = RED;
                 recolor_on_insert(tree->parent);
             } else {
                 // If left children of brother is red and right is black, with a rotation the left becomes red
-                if (tree->parent->right->left != NULL && tree->parent->right->left->color == RED &&
-                    (tree->parent->right->right == NULL || tree->parent->right->right->color == BLACK)) {
+                if (get_color(tree->parent->right->left) == RED && get_color(tree->parent->right->right) == BLACK) {
                     rotate_right(tree->parent->right);
                     tree->parent->right->color = BLACK;
                     tree->parent->right->right->color = RED;
@@ -170,13 +163,11 @@ uThread_tree * recolor_on_removal(uThread_tree *tree) {
                 tree->color = BLACK;
             }
         } else { // Symmetric
-            if ((tree->parent->left->right == NULL || tree->parent->left->right->color == BLACK) &&
-                (tree->parent->left->left == NULL || tree->parent->left->left->color == BLACK)) {
+            if (get_color(tree->parent->left->right) == BLACK && get_color(tree->parent->left->left) == BLACK) {
                 tree->parent->left->color = RED;
                 recolor_on_insert(tree->parent);
             } else {
-                if (tree->parent->left->right != NULL && tree->parent->left->right->color == RED &&
-                    (tree->parent->left->left == NULL || tree->parent->left->left->color == BLACK)) {
+                if (get_color(tree->parent->left->right) == RED && get_color(tree->parent->left->left) == BLACK) {
                     rotate_left(tree->parent->left);
                     tree->parent->left->color = BLACK;
                     tree->parent->left->left->color = RED;
@@ -252,4 +243,15 @@ uThread_tree *get_root(uThread_tree *node) {
     if (!node->parent)
         return node;
     return get_root(node->parent);
+}
+
+int update_leftmost(uThread_tree *node) {
+    if (node->leftmost != (!node->left ? node : node->left->leftmost)) {
+        node->leftmost = !node->left ? node : node->left->leftmost;
+
+        if (node->parent != NULL && node == node->parent->left)
+            update_leftmost(node->parent);
+    }
+
+    return 0;
 }

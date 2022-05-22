@@ -41,4 +41,6 @@ uThread_tree *get_root(uThread_tree *node);
 
 enum color get_color(uThread_tree *node);
 
+int update_leftmost(uThread_tree *node);
+
 #endif /* uThread_tree_h */
