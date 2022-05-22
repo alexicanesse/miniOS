@@ -1,6 +1,6 @@
 #  MiniOS
 
-Bienvenue dans le README du projet de Jean de Stainte Marie et Alexi Canesse. Ce projet inclue l'intégralité du contenue demandé. Quelques libertées ont étées prisent avec votre accord concernant le heap memory manager afin d'obtenir un heap memory manager qui nous semble meilleur.  
+Bienvenue dans le README du projet de Jean de Sainte Marie et Alexi Canesse. Ce projet inclue l'intégralité du contenue demandé. Quelques libertées ont étées prisent avec votre accord concernant le heap memory manager afin d'obtenir un heap memory manager qui nous semble meilleur.  
 
 ## Utilisation de la library
 
