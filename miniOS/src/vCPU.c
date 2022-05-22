@@ -35,7 +35,6 @@ extern void free(void* ptr);
 
 typedef void (* ucfunc_t)(void);
 
-extern pthread_mutex_t mutex_vCPUs;
 __thread int must_end = 0; /* this variable is used to be able to wait for the quantum to end before deleting a vCPU */
 ucontext_t *uThread_cleaner(uThread *uthread);
 
@@ -83,12 +82,10 @@ int create_vCPU(int nbr_vCPU){
  * join with the thread
  */
 int destruct_vCPU(int nbr_vCPU){
-    pthread_mutex_lock(&mutex_vCPUs);
     while(nbr_vCPU--){
-        if(vCPUs == NULL){ /* There isn't any vCPU left to delete */
-            pthread_mutex_unlock(&mutex_vCPUs);
+        if(vCPUs == NULL) /* There isn't any vCPU left to delete */
             return -1; /* we were not able to delete enough vCPUs */
-        }
+        
 
         vCPU *cpu_buffer = vCPUs;
         vCPUs = vCPUs->next; /* the first vCPU is removed from the list */
@@ -100,7 +97,6 @@ int destruct_vCPU(int nbr_vCPU){
         free(cpu_buffer->pthread);
         free(cpu_buffer);
     }
-    pthread_mutex_unlock(&mutex_vCPUs);
     return 0;
 }
 
