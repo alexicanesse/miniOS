@@ -355,8 +355,6 @@ enum color get_color(uThread_tree *node) {
 }
 
 uThread_tree *get_root(uThread_tree *node) {
-    if (node->parent != NULL && (node->left == node->parent || node->right == node->parent))
-        printf("%p\n", empty_tree()->parent->parent);
     if (!node->parent)
         return node;
     return get_root(node->parent);
