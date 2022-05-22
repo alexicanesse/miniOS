@@ -49,8 +49,8 @@ uThread *CFS_func(void) {
     if (tree == NULL) //if the tree is empty, there is nothing to schedule
         return NULL;
 
-    uThread *thread = tree->leftmost->thread; //get the leftmost thread
     pthread_mutex_lock(&mutex);
+    uThread *thread = tree->leftmost->thread; //get the leftmost thread
     tree = remove_node(tree->leftmost, tree); //then remove it from the tree
     pthread_mutex_unlock(&mutex);
     return thread;
