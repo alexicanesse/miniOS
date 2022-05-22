@@ -38,7 +38,7 @@
  */
 mem_class_t *class_array = NULL;
 pthread_mutex_t mutex_clsarr = PTHREAD_MUTEX_INITIALIZER;
-long int  seed = 0;
+long int seed = 0;
 
 /*
  * mutex over all function because if another thread tries to init the class, it needs to wait for it
@@ -51,7 +51,7 @@ int initclsarr(void){
         return 0;
     }
 
-    seed = random();
+    seed = random(); /* this seed will be used to calculate the cannaries */
     size_t PAGESIZE = PAGESIZE_INITIALIZER;
     
     void* address = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
