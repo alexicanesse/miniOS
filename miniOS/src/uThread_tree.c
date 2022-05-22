@@ -35,7 +35,7 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
         node->color = RED;
         node->leftmost = node;
     } else {
-        if (thread->vTime < tree->thread->vTime) { // find recursively where to insert
+        if (thread->vTime <= tree->thread->vTime) { // find recursively where to insert
             node = insert(thread, tree->left);
             // If the subtree that should contain the new node is empty, attach the node here
             if (node->thread == thread) {
