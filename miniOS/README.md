@@ -21,6 +21,11 @@ Pour compiler la library, placez-vous à la racine du projet, dans le même doss
 make
 ```
 
+Il est possible de compiler la library de manière à ce que tous les appels à `malloc`, `realloc` et `free` utilisent notre propre HMM. Il suffit de compiler de cette manière:
+```sh
+make WITH_OWN_HMM=1
+```
+
 ## Testes
 
 Le projet comporte plusieurs tests. Les tests représentent de simples exemples de bon fonctionnement: le code y est moins propre. Les commentaires permettent toute fois de comprendre le comportement attendue.  
@@ -50,6 +55,11 @@ make test_hm_guard_page
 
 #Pour tester les cannaries
 make test_hm_overflow
+```
+
+Il est possible de compiler la library de manière à ce que tous les appels à `malloc`, `realloc` et `free` utilisent notre propre HMM. Utiliser les tests des vCPUs avec notre propre HMM est un test ultime qui fonctionne! Pour essayer, executez
+```sh
+make test_hm_RR WITH_OWN_HMM=1
 ```
 
 ## Liste des fonctions disponibles 
