@@ -1,10 +1,13 @@
 #  MiniOS
 
-Bienvenue dans le README du projet de Jean de Sainte Marie et Alexi Canesse. Ce projet inclue l'intégralité du contenue demandé. Quelques libertées ont étées prisent avec votre accord concernant le heap memory manager afin d'obtenir un heap memory manager qui nous semble meilleur.  
+Bienvenue dans le README du projet de Jean de Sainte Marie et Alexi Canesse. Ce projet inclue l'intégralité du contenue demandé. à l'exception de l'intégration de la partie uiodriver. Un protoype a été réalisé mais nous n'avons pas eu le temps de correctement l'intégrer au projet.
+
+
+Quelques libertées ont étées prisent avec votre accord concernant le heap memory manager afin d'obtenir un heap memory manager qui nous semble meilleur.  
 
 ## Utilisation de la library
 
-Le seul header file de la library que l'utilisateurice devrait importer est `miniOS.h`. Le comportement en cas d'utilisation du fonction qui n'est pas présente dans ce header file est non définie.  
+Le seul header file de la library que l'utilisateurice devrait importer est `miniOS.h`. Le comportement en cas d'utilisation d'une fonction qui n'est pas présente dans ce header file est non définie.  
 
 Pour compiler un projet utilisant la library, pensez à include `miniOS.h` dans les fichiers utilisant des fonctions ou structures de données de la library et compilez avec l'option `-lminiOS` et l'option `-L/PATH_TO_THE_libminiOS.so_FILE`.
 
@@ -96,7 +99,7 @@ Deux implémentations sont proposées. memory_legacy.c contient l'implémentatio
 
 L'implémentation présente dans le fichier memory.c est considérée comme l'implémentation du projet. Les trois fonctions misent à disposition de l'utilisateurice sont `cls_malloc`, `cls_realloc` et `cls_free`. Ces fonctions correspondent à un heap manager sécurisé. Néanmoins, comme nous vous l'avons expliqué, ce heap manager ne reprend pas exactement le fonctionnement donné par le sujet de TP.  
 
-Les allocations sont séparées par des classes dont les tailles sont des puissances de 2. Afin d'obtenir un bon équilibre en performance temporelle et performance en usage mémoire, nous plaçons des _guard page_ de manière fréquente et utilisons systématiquement des cannaries. Les cannaries sont obtenue à partir d'un hashage dépendant d'un _seed_ afin d'augmenter la sécurité.  
+Les allocations sont séparées par des classes dont les tailles sont des puissances de 2. Afin d'obtenir un bon équilibre en performance temporelle et performance en usage mémoire, nous plaçons des _guard page_ de manière fréquente et utilisons systématiquement des cannaries. Les cannaries sont obtenue à partir d'un hashage dépendant d'un _seed_ généré aléatoirement afin d'augmenter la sécurité.  
 
 
 
@@ -113,7 +116,7 @@ __Fonctionnement de `cls_realloc`.__ Si le pointeur donné en entré est `NULL`,
 
 __Fonctionnement de `cls_free`.__ Cette fonctione vérifie que le pointeur donné en argument est a bien été alloué (protection contre les _double free_ attaque) et vérifie le cannaries si cela est nécessaire.   
 
-La vérification des allocations se fait à l'aide d'une _used_list_. Icelle est palcé au début des pages allouées à la _free list_ associées et croit vers le haut. Ceci a été décidé afin de réduire la consommation en mémoire de la library.
+La vérification des allocations se fait à l'aide d'une _used_list_. Icelle est placé au début des pages allouées à la _free list_ associées et croit vers le haut. Ceci a été décidé afin de réduire la consommation en mémoire de la library.
 
 
 
