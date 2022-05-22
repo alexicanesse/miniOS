@@ -1,22 +1,24 @@
 //
-//  test.c
+//  test_CFS.c
 //  miniOS
 //
-//  Created on 18/04/2022.
+//  Created on 22/05/2022.
 //
 
+#include "test_CFS.h"
 
 
 #include <stdio.h>
 #include <unistd.h>
 
-#include "test.h"
+
 #include "miniOS.h"
 
 void f_t1(void){ //thread 1
     int i = 10;
     while(i--){
         printf("\033[0;34m-t1-%d--------- \033[0m\n", i);
+        yield();
     }
 }
 
@@ -27,7 +29,7 @@ void f_t2(void){ //thread 2
     }
 }
 
-void f_t3(void){ //thread 2
+void f_t3(void){ //thread 3
     while(1){
         printf("\033[0;33m-----------t3-\033[0m\n");
         sleep(2);

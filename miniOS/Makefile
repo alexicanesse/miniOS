@@ -84,13 +84,23 @@ test_hm_legacy: $(OUT) ./test/test_hm_legacy/test_hm_legacy.o
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
 	
-test_vCPU: $(OUT) ./test/test_vCPU/test.o
+test_RR: $(OUT) ./test/test_vCPU/test_RR.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o ./test/test_vCPU/test_vCPU $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	$(CC) -o ./test/test_vCPU/test_RR $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	@echo "${PURPLE}Testing vCPUs!\n\n\n${RESET}"
-	./test/test_vCPU/test_vCPU
+	./test/test_vCPU/test_RR
 
-./test/test_vCPU/test_vCPU.o: ./test/test_vCPU/test.c
+./test/test_vCPU/test_RR.o: ./test/test_vCPU/test_RR.c
+	@echo "${PURPLE}Building C object" $@ "${RESET}"
+	$(CC) $(CFLAGS) -o $@ -c $< -g
+	
+test_CFS: $(OUT) ./test/test_vCPU/test_CFS.o
+	@echo "${BLUE}Linking C executable" $@ "${RESET}"
+	$(CC) -o ./test/test_vCPU/test_CFS $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@echo "${PURPLE}Testing vCPUs!\n\n\n${RESET}"
+	./test/test_vCPU/test_CFS
+
+./test/test_vCPU/test_CFS.o: ./test/test_vCPU/test_CFS.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
 	$(CC) $(CFLAGS) -o $@ -c $< -g
 
