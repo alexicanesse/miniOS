@@ -30,88 +30,88 @@ endif
 
 $(DIRECTORIES) :
 	@echo "${PURPLE}Creating missing directory" $@ "${RESET}"
-	mkdir $@
+	@mkdir $@
 
 all: $(OUT)
 
 $(OUT): $(OFILES)
 	@echo "${BLUE}Linking C library" $@ "${RESET}"
-	$(CC) -o $@ $^ $(LDFLAGS) -shared -lm -fPIC -g
+	@$(CC) -o $@ $^ $(LDFLAGS) -shared -lm -fPIC -g
 
 ./objects/vCPU.o : ./src/vCPU.c $(DIRECTORIES)
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) -D_POSIX_C_SOURCE=199309L $(CFLAGS) -o $@ -c $< -g
+	@$(CC) -D_POSIX_C_SOURCE=199309L $(CFLAGS) -o $@ -c $< -g
 
 ./objects/%.o: ./src/%.c $(DIRECTORIES)
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $< -g
+	@$(CC) $(CFLAGS) -o $@ -c $< -g
 	
 test_hm_all: test_hm test_hm_legacy test_hm_guard_page test_hm_overflow
 	
 test_hm: $(OUT) ./test/test_hm/test_hm.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o ./test/test_hm/test_hm $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@$(CC) -o ./test/test_hm/test_hm $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	@echo "${PURPLE}Testing the heap memory manager!\n${RESET}"
 	@./test/test_hm/test_hm
 
 ./test/test_hm/test_hm.o: ./test/test_hm/test_hm.c
-	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $< -g
+	@@echo "${PURPLE}Building C object" $@ "${RESET}"
+	@$(CC) $(CFLAGS) -o $@ -c $< -g
 	
 test_hm_overflow: $(OUT) ./test/test_hm/test_hm_overflow.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o ./test/test_hm/test_hm_overflow $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@$(CC) -o ./test/test_hm/test_hm_overflow $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	@echo "${PURPLE}Testing the heap memory manager overflow protection!\n${RESET}"
 	@./test/test_hm/test_hm_overflow
 
 ./test/test_hm/test_hm.o: ./test/test_hm/test_hm.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $< -g
+	@$(CC) $(CFLAGS) -o $@ -c $< -g
 	
 test_hm_guard_page: $(OUT) ./test/test_hm/test_hm_guard_page.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o ./test/test_hm/test_hm_guard_page $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@$(CC) -o ./test/test_hm/test_hm_guard_page $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	@echo "${PURPLE}Testing the heap memory manager guard pages!\n${RESET}"
 	@./test/test_hm/test_hm_guard_page
 
 ./test/test_hm/test_hm_guard_page.o: ./test/test_hm/test_hm_guard_page.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $< -g
+	@$(CC) $(CFLAGS) -o $@ -c $< -g
 	
 test_hm_legacy: $(OUT) ./test/test_hm_legacy/test_hm_legacy.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o ./test/test_hm_legacy/test_hm_legacy $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@$(CC) -o ./test/test_hm_legacy/test_hm_legacy $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	@echo "${PURPLE}Testing the legacy heap memory manager!\n${RESET}"
 	@./test/test_hm_legacy/test_hm_legacy
 
 ./test/test_hm_legacy/test_hm_legacy.o: ./test/test_hm_legacy/test_hm_legacy.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $< -g
+	@$(CC) $(CFLAGS) -o $@ -c $< -g
 	
 test_RR: $(OUT) ./test/test_vCPU/test_RR.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o ./test/test_vCPU/test_RR $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@$(CC) -o ./test/test_vCPU/test_RR $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	@echo "${PURPLE}Testing vCPUs!\n\n\n${RESET}"
-	./test/test_vCPU/test_RR
+	@./test/test_vCPU/test_RR
 
 ./test/test_vCPU/test_RR.o: ./test/test_vCPU/test_RR.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $< -g
+	@$(CC) $(CFLAGS) -o $@ -c $< -g
 	
 test_CFS: $(OUT) ./test/test_vCPU/test_CFS.o
 	@echo "${BLUE}Linking C executable" $@ "${RESET}"
-	$(CC) -o ./test/test_vCPU/test_CFS $^ $(LDFLAGS) -L. -lminiOS -O2 -g
+	@$(CC) -o ./test/test_vCPU/test_CFS $^ $(LDFLAGS) -L. -lminiOS -O2 -g
 	@echo "${PURPLE}Testing vCPUs!\n\n\n${RESET}"
-	./test/test_vCPU/test_CFS
+	@./test/test_vCPU/test_CFS
 
 ./test/test_vCPU/test_CFS.o: ./test/test_vCPU/test_CFS.c
 	@echo "${PURPLE}Building C object" $@ "${RESET}"
-	$(CC) $(CFLAGS) -o $@ -c $< -g
+	@$(CC) $(CFLAGS) -o $@ -c $< -g
 
 clean :
 	@echo "${RED}Cleaning${RESET}"
-	$(RM) $(OFILES) ./test/test_hm/test_hm.o
+	@$(RM) $(OFILES) ./test/test_hm/test_hm.o
 	
 mrproper : clean
 	@echo "${RED}Cleaning all files${RESET}"
-	$(RM) $(OUT) ./test/test_hm/test_hm
+	@$(RM) $(OUT) ./test/test_hm/test_hm
