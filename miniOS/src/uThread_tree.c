@@ -365,7 +365,6 @@ uThread_tree *get_root(uThread_tree *node) {
 int update_leftmost(uThread_tree *node) {
         if (node->parent != NULL && node == node->parent->left)
             update_leftmost(node->parent);
-    }
 
     return 0;
 }
