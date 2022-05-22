@@ -40,6 +40,13 @@ int main(){
     _sigact2.sa_flags = SA_SIGINFO;
 
     sigaction(SIGBUS, &_sigact2, NULL);
+    
+    static struct sigaction _sigact;
+    memset(&_sigact, 0, sizeof(_sigact));
+    _sigact.sa_sigaction = guardpage_works;
+    _sigact.sa_flags = SA_SIGINFO;
+
+    sigaction(SIGSEGV, &_sigact, NULL);
 
     char *buff = cls_malloc(16000);
     buff[16385] = 'c';

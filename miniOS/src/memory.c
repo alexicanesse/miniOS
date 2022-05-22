@@ -51,7 +51,7 @@ int initclsarr(void){
         return 0;
     }
 
-    seed = random(); /* this seed will be used to calculate the cannaries */
+    seed = random();
     size_t PAGESIZE = PAGESIZE_INITIALIZER;
     
     void* address = mmap(0x0, /* If addr is zero and MAP_FIXED is not specified, then an
