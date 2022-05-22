@@ -33,26 +33,27 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree) {
         node = empty_tree();
         node->thread = thread;
         node->color = RED;
-        node->leftmost = node;
     } else {
         if (thread->vTime <= tree->thread->vTime) { // find recursively where to insert
-            node = insert(thread, tree->left);
-            // If the subtree that should contain the new node is empty, attach the node here
-            if (node->thread == thread) {
+            if (!tree->left) {
+                node = insert(thread, tree->left);
+                // If the subtree that should contain the new node is empty, attach the node here
                 tree->left = node;
                 node->parent = tree;
                 update_leftmost(tree);
                 if (tree->color == RED)
                     recolor_on_insert(tree); // Re-equilibrate if both node and its parent are red
-            }
+            } else
+                return insert(thread, tree->left);
         } else { // Symmetric
-            node = insert(thread, tree->right);
-            if (node->thread == thread) {
+            if (!tree->right) {
+                node = insert(thread, tree->right);
                 tree->right = node;
                 node->parent = tree;
                 if (tree->color == RED)
                     recolor_on_insert(tree);
-            }
+            } else
+                return insert(thread, tree->right);
         }
     }
 
@@ -354,6 +355,8 @@ enum color get_color(uThread_tree *node) {
 }
 
 uThread_tree *get_root(uThread_tree *node) {
+    if (node->parent != NULL && (node->left == node->parent || node->right == node->parent))
+        printf("%p\n", empty_tree()->parent->parent);
     if (!node->parent)
         return node;
     return get_root(node->parent);
