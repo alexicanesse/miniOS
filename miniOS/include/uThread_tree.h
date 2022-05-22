@@ -29,7 +29,7 @@ uThread_tree *insert(uThread *thread, uThread_tree *tree);
 
 int recolor_on_insert(uThread_tree *tree);
 
-uThread_tree *recolor_on_removal(uThread_tree *node, uThread_tree *parent);
+int recolor_on_removal(uThread_tree *node, uThread_tree *parent);
 
 uThread_tree *rotate_right(uThread_tree *tree);
 

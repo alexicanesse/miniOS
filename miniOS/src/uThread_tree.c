@@ -68,7 +68,7 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
         printf("Wait no\n");
         return remove_node(node->right->leftmost, tree);
     } else { // Else replace the node by its only child or by a leaf if there is none
-        struct uThread_tree *new_node;
+        struct uThread_tree *new_node, *any_node;
         enum color color = node->color;
 
         // Update potential child parent and select it as the node that will replace the one to be removed
@@ -89,12 +89,13 @@ uThread_tree *remove_node(uThread_tree *node, uThread_tree *tree) {
         } else // Else it was the root
             tree = new_node;
         // If node was black, tree has to be re-equilibrated
-        if (color == BLACK && node->parent != NULL) {
-            tree = recolor_on_removal(new_node, node->parent);
-        }
+        if (color == BLACK && node->parent != NULL)
+            recolor_on_removal(new_node, node->parent);
+        any_node = !new_node ? node->parent : new_node; // get non-NULL node of the tree (if the tree is not empty)
+
         free(node);
 
-        return tree;
+        return !any_node ? any_node : get_root(any_node);
     }
 }
 
@@ -159,7 +160,7 @@ int recolor_on_insert(uThread_tree *tree) {
 }
 
 // Happens when a black node is removed, node is the replacement node, parent its parent
-uThread_tree *recolor_on_removal(uThread_tree *node, uThread_tree *parent) {
+int recolor_on_removal(uThread_tree *node, uThread_tree *parent) {
     // Replacement node stay black if it is the root and become black if it was red
     // In that case, there is no "double black" node
     if (get_color(node) == RED || !parent) {
@@ -242,7 +243,7 @@ uThread_tree *recolor_on_removal(uThread_tree *node, uThread_tree *parent) {
         }
     }
 
-    return node;
+    return 0;
 }
 
 uThread_tree *rotate_right(uThread_tree *tree) {
