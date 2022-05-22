@@ -50,7 +50,9 @@ uThread *CFS_func(void) {
         return NULL;
 
     uThread *thread = tree->leftmost->thread; //get the leftmost thread
+    pthread_mutex_lock(&mutex);
     tree = remove_node(tree->leftmost, tree); //then remove it from the tree
+    pthread_mutex_unlock(&mutex);
     return thread;
 }
 
@@ -66,7 +68,9 @@ uThread *next_to_schedule(uThread *thread) {
         if (thread != NULL) {
             thread->running = 0;
             thread->vTime += scheduler.quantum;
+            pthread_mutex_lock(&mutex);
             tree = insert(thread, tree);
+            pthread_mutex_unlock(&mutex);
         }
         return CFS_func();
     }
@@ -79,7 +83,9 @@ int scheduler_add_thread(uThread *thread) {//adds thread to the appropriate data
             thread->vTime = 0;
         else
             thread->vTime = tree->leftmost->thread->vTime;
+        pthread_mutex_lock(&mutex);
         tree = insert(thread, tree);
+        pthread_mutex_unlock(&mutex);
         return 0;
     } else //RR
         return enqueue(thread);
