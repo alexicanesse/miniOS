@@ -371,6 +371,8 @@ int update_leftmost(uThread_tree *node) {
     return 0;
 }
 
+// Utility functions, only used for debug
+
 int check_rb(uThread_tree *tree) {
     if (!tree)
         return 1;
